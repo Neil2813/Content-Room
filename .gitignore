@@ -1,0 +1,19 @@
+# Ignore local environment and IDE files
+.env
+.env.*
+*.log
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+dist/
+build/
+
+# Ignore OS cruft
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Project-specific
+CLAUDE.md
+

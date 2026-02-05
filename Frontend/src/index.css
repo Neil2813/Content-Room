@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand Colors - Monochrome warm palette */
+    --background: 45 100% 86%;
+    --foreground: 0 54% 22%;
+
+    --card: 45 100% 90%;
+    --card-foreground: 0 54% 22%;
+
+    --popover: 45 100% 92%;
+    --popover-foreground: 0 54% 22%;
+
+    --primary: 0 54% 22%;
+    --primary-foreground: 45 100% 95%;
+
+    --secondary: 45 60% 80%;
+    --secondary-foreground: 0 54% 22%;
+
+    --muted: 45 40% 82%;
+    --muted-foreground: 0 30% 40%;
+
+    --accent: 45 50% 78%;
+    --accent-foreground: 0 54% 22%;
+
+    --destructive: 0 70% 40%;
+    --destructive-foreground: 45 100% 95%;
+
+    --border: 0 54% 22% / 0.15;
+    --input: 0 54% 22% / 0.15;
+    --ring: 0 54% 22%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 45 100% 88%;
+    --sidebar-foreground: 0 54% 22%;
+    --sidebar-primary: 0 54% 22%;
+    --sidebar-primary-foreground: 45 100% 95%;
+    --sidebar-accent: 45 60% 82%;
+    --sidebar-accent-foreground: 0 54% 22%;
+    --sidebar-border: 0 54% 22% / 0.1;
+    --sidebar-ring: 0 54% 22%;
+
+    /* Font Families */
+    --font-english: 'Outfit', 'Urbanist', sans-serif;
+    --font-telugu: 'Anek Telugu', sans-serif;
+    --font-odia: 'Anek Odia', sans-serif;
+    --font-tamil: 'Anek Tamil', sans-serif;
+    --font-bangla: 'Anek Bangla', sans-serif;
+    --font-kannada: 'Anek Kannada', sans-serif;
+    --font-hindi: 'Anek Devanagari', sans-serif;
+    --font-malayalam: 'Anek Malayalam', sans-serif;
+    --font-gujarati: 'Anek Gujarati', sans-serif;
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px hsl(0 54% 22% / 0.06);
+    --shadow-medium: 0 4px 16px hsl(0 54% 22% / 0.08);
+    --shadow-large: 0 8px 32px hsl(0 54% 22% / 0.1);
+  }
+
+  .dark {
+    --background: 0 20% 8%;
+    --foreground: 45 100% 90%;
+
+    --card: 0 20% 12%;
+    --card-foreground: 45 100% 90%;
+
+    --popover: 0 20% 10%;
+    --popover-foreground: 45 100% 90%;
+
+    --primary: 45 100% 86%;
+    --primary-foreground: 0 54% 22%;
+
+    --secondary: 0 20% 18%;
+    --secondary-foreground: 45 100% 90%;
+
+    --muted: 0 15% 20%;
+    --muted-foreground: 45 40% 70%;
+
+    --accent: 0 20% 16%;
+    --accent-foreground: 45 100% 90%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 45 100% 95%;
+
+    --border: 45 100% 86% / 0.15;
+    --input: 45 100% 86% / 0.15;
+    --ring: 45 100% 86%;
+
+    --sidebar-background: 0 20% 10%;
+    --sidebar-foreground: 45 100% 90%;
+    --sidebar-primary: 45 100% 86%;
+    --sidebar-primary-foreground: 0 54% 22%;
+    --sidebar-accent: 0 20% 16%;
+    --sidebar-accent-foreground: 45 100% 90%;
+    --sidebar-border: 45 100% 86% / 0.1;
+    --sidebar-ring: 45 100% 86%;
+  }
+
+  /* Language-based font switching */
+  .lang-en { font-family: var(--font-english); }
+  .lang-te { font-family: var(--font-telugu); }
+  .lang-or { font-family: var(--font-odia); }
+  .lang-ta { font-family: var(--font-tamil); }
+  .lang-bn { font-family: var(--font-bangla); }
+  .lang-kn { font-family: var(--font-kannada); }
+  .lang-hi { font-family: var(--font-hindi); }
+  .lang-ml { font-family: var(--font-malayalam); }
+  .lang-gu { font-family: var(--font-gujarati); }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-english);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-medium {
+    box-shadow: var(--shadow-medium);
+  }
+
+  .shadow-large {
+    box-shadow: var(--shadow-large);
+  }
+
+  .container-tight {
+    @apply max-w-5xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}

@@ -1,0 +1,175 @@
+"""
+ContentOS Backend - Main Application Entry Point
+
+AWS-native AI Content Workflow Engine with resilient fallback architecture.
+All features enabled - no authentication required for AI services.
+"""
+import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from config import settings
+from utils.logging import setup_logging
+from database import init_db
+from middleware.rate_limiter import RateLimitMiddleware, RateLimitConfig
+
+
+# Setup structured logging
+setup_logging(settings.log_level)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifespan manager."""
+    # Startup
+    logger.info("=" * 60)
+    logger.info("Content Room Backend Starting...")
+    logger.info("=" * 60)
+    logger.info(f"AWS Configured: {settings.aws_configured}")
+    logger.info(f"LLM Provider: {settings.llm_provider}")
+    logger.info(f"Debug Mode: {settings.debug}")
+    logger.info("=" * 60)
+    
+    # Initialize database
+    await init_db()
+    logger.info("Database initialized")
+    
+    # Start background scheduler
+    if settings.scheduler_enabled:
+        from services.task_scheduler import start_scheduler
+        scheduler = start_scheduler()
+        logger.info("Background scheduler started")
+    
+    yield
+    
+    # Shutdown
+    if settings.scheduler_enabled:
+        from services.task_scheduler import stop_scheduler
+        stop_scheduler()
+        logger.info("Background scheduler stopped")
+    
+    logger.info("Content Room Backend Shutting Down...")
+
+
+# Create FastAPI application
+app = FastAPI(
+    title="ContentOS API",
+    description="AI-powered Content Workflow Engine with AWS + Free Fallback Architecture.",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+
+# CORS Middleware - Use configured origins in production
+if settings.debug:
+    # Allow all origins in development
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Use configured origins in production
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
+
+# Rate Limiting Middleware
+rate_limit_config = RateLimitConfig(
+    requests_per_minute=getattr(settings, 'rate_limit_per_minute', 60),
+    burst_size=getattr(settings, 'rate_limit_burst', 10),
+)
+app.add_middleware(RateLimitMiddleware, config=rate_limit_config)
+
+
+# Serve uploaded files statically
+uploads_path = Path(settings.storage_path)
+uploads_path.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+
+
+# Global Exception Handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "internal_server_error",
+            "message": str(exc) if settings.debug else "An unexpected error occurred.",
+        },
+    )
+
+
+# Health Check
+@app.get("/health", tags=["System"])
+async def health_check():
+    return {
+        "status": "healthy",
+        "version": "1.0.0",
+        "aws_configured": settings.aws_configured,
+        "llm_provider": settings.llm_provider,
+        "scheduler_enabled": settings.scheduler_enabled,
+    }
+
+
+# ===========================================
+# ALL ROUTERS ENABLED
+# ===========================================
+
+# 1. Auth Router
+from routers import auth
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+
+# 2. Content Creation Router
+from routers import creation
+app.include_router(creation.router, prefix="/api/v1/create", tags=["Content Creation"])
+
+# 3. Moderation Router
+from routers import moderation
+app.include_router(moderation.router, prefix="/api/v1/moderate", tags=["Moderation"])
+
+# 4. Translation Router
+from routers import translation
+app.include_router(translation.router, prefix="/api/v1/translate", tags=["Translation"])
+
+# 5. Scheduler Router
+from routers import scheduler
+app.include_router(scheduler.router, prefix="/api/v1/schedule", tags=["Scheduling"])
+
+# 6. Analytics Router
+from routers import analytics
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
+
+# 7. Media Router (NEW)
+from routers import media
+app.include_router(media.router, prefix="/api/v1/media", tags=["Media"])
+
+# 8. Social Connect Router (NEW)
+from routers import social_connect
+app.include_router(social_connect.router, prefix="/api/v1/social", tags=["Social Media"])
+
+
+@app.get("/", tags=["System"])
+async def root():
+    return {"message": "ContentOS API", "docs": "/docs"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
