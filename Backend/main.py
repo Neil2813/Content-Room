@@ -8,6 +8,10 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from pathlib import Path
+import warnings
+
+# Suppress Pydantic V2 warnings from dependencies
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -180,6 +184,14 @@ app.include_router(content.router, prefix="/api/v1/content", tags=["Content"])
 # 10. History Router
 from routers import history
 app.include_router(history.router, prefix="/api/v1/history", tags=["History"])
+
+# 11. Competitor Analysis Router (NEW)
+from routers import competitor
+app.include_router(competitor.router, prefix="/api/v1/competitor", tags=["Competitor"])
+
+# 12. Content Calendar Router (NEW)
+from routers import calendar
+app.include_router(calendar.router, prefix="/api/v1/calendar", tags=["Content Calendar"])
 
 
 @app.get("/", tags=["System"])

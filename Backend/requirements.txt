@@ -70,3 +70,8 @@ pytest-asyncio==0.23.5
 # Content Moderation (Local/Fallback)
 localmod @ git+https://github.com/KOKOSde/localmod.git
 
+
+# Scraping
+beautifulsoup4==4.12.3
+
+holidays==0.42.0

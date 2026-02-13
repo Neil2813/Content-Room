@@ -4,7 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import DisplayCards from "@/components/ui/display-cards";
 import { StepCard } from '@/components/shared/StepCard';
-import { Wand2, Shield, ArrowRight, Monitor, Database, Globe, Layers } from 'lucide-react';
+import { Wand2, Shield, ArrowRight, Monitor, Database, Globe, Layers, TrendingUp, CalendarDays } from 'lucide-react';
 import DatabaseWithRestApi from '@/components/ui/database-with-rest-api';
 
 
@@ -74,30 +74,30 @@ export default function Landing() {
               <div className="w-full max-w-3xl">
                 <DisplayCards cards={[
                   {
-                    icon: <Wand2 className="size-5 text-blue-300" />,
-                    title: "AI Creation",
-                    description: "Generate captions & summaries",
-                    date: "Instant",
+                    icon: <TrendingUp className="size-5 text-blue-300" />,
+                    title: "Competitor Intel",
+                    description: "Analyze strategies & gaps",
+                    date: "New",
                     iconClassName: "text-blue-500",
                     titleClassName: "text-blue-500",
                     className: "[grid-area:stack] hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
-                    icon: <Shield className="size-5 text-blue-300" />,
-                    title: "Smart Moderation",
-                    description: "Automated safety analysis",
-                    date: "Real-time",
-                    iconClassName: "text-blue-500",
-                    titleClassName: "text-blue-500",
+                    icon: <CalendarDays className="size-5 text-purple-300" />,
+                    title: "Content Calendar",
+                    description: "AI-planned schedule",
+                    date: "Featured",
+                    iconClassName: "text-purple-500",
+                    titleClassName: "text-purple-500",
                     className: "[grid-area:stack] translate-x-12 translate-y-10 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
-                    icon: <Monitor className="size-5 text-amber-400" />,
-                    title: "Official Webapp",
-                    description: "The premium choice for you",
-                    date: "Featured",
-                    iconClassName: "text-amber-500",
-                    titleClassName: "text-amber-500",
+                    icon: <Shield className="size-5 text-emerald-400" />,
+                    title: "Smart Moderation",
+                    description: "Automated safety checks",
+                    date: "Real-time",
+                    iconClassName: "text-emerald-500",
+                    titleClassName: "text-emerald-500",
                     className: "[grid-area:stack] translate-x-24 translate-y-20 hover:translate-y-10",
                   },
                 ]} />

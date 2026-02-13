@@ -22,6 +22,29 @@ export interface User {
   created_at: string;
 }
 
+// Competitor Types
+export interface CompetitorRequest {
+  url: string;
+  niche: string;
+}
+
+export interface CompetitorResponse {
+  analysis: string;
+  url_found: boolean;
+}
+
+// Calendar Types
+export interface CalendarRequest {
+  month: string;
+  year: number;
+  niche: string;
+  goals: string;
+}
+
+export interface CalendarResponse {
+  calendar_markdown: string;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;
@@ -830,6 +853,36 @@ export async function checkBackendHealth(): Promise<boolean> {
   }
 }
 
+// ============================================
+// Competitor API
+// ============================================
+
+export const competitorAPI = {
+  async analyze(url: string, niche: string): Promise<CompetitorResponse> {
+    const response = await fetch(`${API_V1}/competitor/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ url, niche }),
+    });
+    return handleResponse<CompetitorResponse>(response);
+  },
+};
+
+// ============================================
+// Calendar API
+// ============================================
+
+export const calendarAPI = {
+  async generate(data: CalendarRequest): Promise<CalendarResponse> {
+    const response = await fetch(`${API_V1}/calendar/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<CalendarResponse>(response);
+  },
+};
+
 // Default export for convenience
 const api = {
   auth: authAPI,
@@ -840,6 +893,8 @@ const api = {
   translation: translationAPI,
   socialConnect: socialConnectAPI,
   history: historyAPI,
+  competitor: competitorAPI,
+  calendar: calendarAPI,
   checkHealth: checkBackendHealth,
   setAuthToken,
   getAuthToken,

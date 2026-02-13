@@ -17,6 +17,8 @@ import Moderation from "./pages/Moderation";
 import Scheduler from "./pages/Scheduler";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
+import CompetitorAnalysis from "./pages/CompetitorAnalysis";
+import ContentCalendar from "./pages/ContentCalendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => {
               <Route path="/studio" element={<ProtectedRoute><Studio /></ProtectedRoute>} />
               <Route path="/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
               <Route path="/scheduler" element={<ProtectedRoute><Scheduler /></ProtectedRoute>} />
+              <Route path="/competitor" element={<ProtectedRoute><CompetitorAnalysis /></ProtectedRoute>} />
+              <Route path="/calendar" element={<ProtectedRoute><ContentCalendar /></ProtectedRoute>} />
               <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               

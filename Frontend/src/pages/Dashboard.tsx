@@ -20,6 +20,8 @@ import {
   ArrowUpRight,
   RefreshCw,
   PieChart,
+  CalendarDays,
+  Target, // Using Target instead of TrendingUp which is already imported
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsAPI, DashboardMetrics, ModerationStats, checkBackendHealth } from '@/services/api';
@@ -336,52 +338,70 @@ export default function Dashboard() {
             </Card>
 
             {/* Quick Actions */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <Link to="/studio" className="group">
                 <Card className="h-full hover:shadow-soft transition-all hover:border-primary/30 hover:scale-[1.02]">
-                  <CardContent className="pt-6 pb-6">
+                  <CardContent className="pt-6 pb-6 p-4">
                     <div className="h-10 w-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center mb-3">
                       <Zap className="h-5 w-5" />
                     </div>
-                    <h3 className="font-semibold">Creator Studio</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Create & generate content</p>
-                    <ArrowUpRight className="h-4 w-4 mt-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <h3 className="font-semibold text-sm">Creator Studio</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Create content</p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/competitor" className="group">
+                <Card className="h-full hover:shadow-soft transition-all hover:border-primary/30 hover:scale-[1.02]">
+                  <CardContent className="pt-6 pb-6 p-4">
+                    <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center mb-3">
+                      <Target className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-semibold text-sm">Competitor Intel</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Analyze gaps</p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/calendar" className="group">
+                <Card className="h-full hover:shadow-soft transition-all hover:border-primary/30 hover:scale-[1.02]">
+                  <CardContent className="pt-6 pb-6 p-4">
+                    <div className="h-10 w-10 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center mb-3">
+                      <CalendarDays className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-semibold text-sm">Content Calendar</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Plan strategy</p>
                   </CardContent>
                 </Card>
               </Link>
               <Link to="/moderation" className="group">
                 <Card className="h-full hover:shadow-soft transition-all hover:border-primary/30 hover:scale-[1.02]">
-                  <CardContent className="pt-6 pb-6">
+                  <CardContent className="pt-6 pb-6 p-4">
                     <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
                       <Shield className="h-5 w-5" />
                     </div>
-                    <h3 className="font-semibold">Moderation</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Analyze content safety</p>
-                    <ArrowUpRight className="h-4 w-4 mt-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <h3 className="font-semibold text-sm">Moderation</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Safety check</p>
                   </CardContent>
                 </Card>
               </Link>
               <Link to="/scheduler" className="group">
                 <Card className="h-full hover:shadow-soft transition-all hover:border-primary/30 hover:scale-[1.02]">
-                  <CardContent className="pt-6 pb-6">
+                  <CardContent className="pt-6 pb-6 p-4">
                     <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
                       <Calendar className="h-5 w-5" />
                     </div>
-                    <h3 className="font-semibold">Scheduler</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Plan content calendar</p>
-                    <ArrowUpRight className="h-4 w-4 mt-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <h3 className="font-semibold text-sm">Schedule Plan</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Manage posts</p>
                   </CardContent>
                 </Card>
               </Link>
               <Link to="/history" className="group">
                 <Card className="h-full hover:shadow-soft transition-all hover:border-primary/30 hover:scale-[1.02]">
-                  <CardContent className="pt-6 pb-6">
+                  <CardContent className="pt-6 pb-6 p-4">
                     <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
                       <Clock className="h-5 w-5" />
                     </div>
-                    <h3 className="font-semibold">History</h3>
-                    <p className="text-sm text-muted-foreground mt-1">View activity log</p>
-                    <ArrowUpRight className="h-4 w-4 mt-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <h3 className="font-semibold text-sm">History</h3>
+                    <p className="text-xs text-muted-foreground mt-1">View logs</p>
                   </CardContent>
                 </Card>
               </Link>

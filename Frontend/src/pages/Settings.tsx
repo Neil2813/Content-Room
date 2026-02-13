@@ -351,7 +351,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -360,10 +360,7 @@ export default function Settings() {
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Appearance</span>
             </TabsTrigger>
-            <TabsTrigger value="platforms" className="flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Platforms</span>
-            </TabsTrigger>
+
             <TabsTrigger value="danger" className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
               <span className="hidden sm:inline">Account</span>
@@ -495,68 +492,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* Platforms Tab */}
-          <TabsContent value="platforms" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Connected Platforms</CardTitle>
-                    <CardDescription>Manage your social media connections</CardDescription>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={fetchPlatformStatus}
-                    disabled={platformsLoading}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${platformsLoading ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {platformError && (
-                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm mb-4">
-                    <AlertCircle className="h-4 w-4 inline mr-2" />
-                    {platformError}
-                  </div>
-                )}
 
-                {platformsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <div>
-                    <PlatformRow 
-                      name="X (Twitter)"
-                      icon={<Twitter className="h-5 w-5 text-white" />}
-                      color="bg-black"
-                      status={twitterStatus}
-                      onConnect={handleTwitterConnect}
-                      onDisconnect={handleTwitterDisconnect}
-                    />
-                    <PlatformRow 
-                      name="Instagram"
-                      icon={<Instagram className="h-5 w-5 text-white" />}
-                      color="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400"
-                      status={instagramStatus}
-                      onConnect={handleInstagramConnect}
-                      onDisconnect={handleInstagramDisconnect}
-                    />
-                    <PlatformRow 
-                      name="LinkedIn"
-                      icon={<Linkedin className="h-5 w-5 text-white" />}
-                      color="bg-[#0A66C2]"
-                      status={linkedinStatus}
-                      onConnect={handleLinkedinConnect}
-                      onDisconnect={handleLinkedinDisconnect}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Danger Zone Tab */}
           <TabsContent value="danger" className="space-y-4">

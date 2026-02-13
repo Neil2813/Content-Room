@@ -12,6 +12,8 @@ import {
   X,
   LayoutDashboard,
   History,
+  TrendingUp,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,8 +24,10 @@ interface DashboardLayoutProps {
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Wand2, label: 'Creator Studio', path: '/studio' },
+  { icon: TrendingUp, label: 'Competitor Intel', path: '/competitor' },
+  { icon: CalendarDays, label: 'Content Calendar', path: '/calendar' },
   { icon: Shield, label: 'Moderation', path: '/moderation' },
-  { icon: Calendar, label: 'Scheduler', path: '/scheduler' },
+  { icon: Calendar, label: 'Schedule Plan', path: '/scheduler' },
   { icon: History, label: 'History', path: '/history' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];

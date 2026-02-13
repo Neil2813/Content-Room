@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,7 @@ export default function History() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'content' | 'scheduled'>('all');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     // Don't fetch if not authenticated
     if (!isAuthenticated) {
       setError('Please log in to view your history.');
@@ -99,14 +99,14 @@ export default function History() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, typeFilter, timeFilter]);
 
   useEffect(() => {
     // Wait for auth to finish loading before fetching
     if (!authLoading) {
       fetchHistory();
     }
-  }, [authLoading, isAuthenticated, typeFilter, timeFilter]);
+  }, [authLoading, fetchHistory]);
 
   // Transform API history items to display format
   const combinedHistory: HistoryItem[] = historyItems.map((item) => ({
