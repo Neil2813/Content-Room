@@ -10,8 +10,6 @@ import {
   LogOut,
   Menu,
   X,
-
-
   TrendingUp,
   CalendarDays,
 } from 'lucide-react';
@@ -22,13 +20,11 @@ interface DashboardLayoutProps {
 }
 
 const sidebarItems = [
-
   { icon: Wand2, label: 'Creator Studio', path: '/studio' },
   { icon: TrendingUp, label: 'Competitor Intel', path: '/competitor' },
   { icon: CalendarDays, label: 'Content Calendar', path: '/calendar' },
   { icon: Shield, label: 'Moderation', path: '/moderation' },
   { icon: Calendar, label: 'Schedule Plan', path: '/scheduler' },
-
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
@@ -135,7 +131,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <Menu className="h-5 w-5" />
           </button>
           <h1 className="text-lg font-semibold">
-            {sidebarItems.find((item) => item.path === location.pathname)?.label || 'Creator Studio'}
+            {sidebarItems.find((item) => item.path === location.pathname)?.label || 'Dashboard'}
           </h1>
         </header>
 

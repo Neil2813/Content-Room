@@ -65,39 +65,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       const token = getAuthToken();
-      // Try to load cached user first for immediate UI render
-      const savedUserStr = localStorage.getItem('auth-user');
       
       if (token) {
-        if (savedUserStr) {
-          try {
-             const savedUser = JSON.parse(savedUserStr);
-             setUser(savedUser);
-          } catch (e) {
-             console.error("Failed to parse saved user", e);
+        // Token exists - always try to fetch fresh user data
+        const result = await fetchAndSetUser();
+        
+        if (!result.success) {
+          // If specifically 401, the token is invalid - clear it
+          if (result.status === 401) {
+            console.log('Session expired, clearing auth state');
+            setAuthToken(null);
+            setUser(null);
+            localStorage.removeItem('auth-user');
+          } else {
+            // Other error (e.g. network), try cached user as fallback
+            const savedUser = localStorage.getItem('auth-user');
+            if (savedUser) {
+              try {
+                setUser(JSON.parse(savedUser));
+                console.log('Using cached user data (API unreachable)');
+              } catch {
+                setAuthToken(null);
+                localStorage.removeItem('auth-user');
+              }
+            }
           }
         }
-        
-        // Then verify with API in background
-        try {
-          const profile = await authAPI.getProfile();
-          const transformedUser = transformUser(profile);
-          setUser(transformedUser);
-          localStorage.setItem('auth-user', JSON.stringify(transformedUser));
-        } catch (error) {
-           const err = error as APIError;
-           console.warn('Failed to fetch user profile:', err);
-           if (err.status === 401) {
-             console.log('Session expired, clearing auth state');
-             setAuthToken(null);
-             setUser(null);
-             localStorage.removeItem('auth-user');
-           }
-           // If network error, we keep the cached user (offline mode support)
-        }
       } else {
-        // No token
-        setUser(null);
+        // No token - check for orphaned cache and clear it
         localStorage.removeItem('auth-user');
       }
       
@@ -105,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initAuth();
-  }, []);
+  }, [fetchAndSetUser]);
 
   // Auto-refresh user data periodically when authenticated
   useEffect(() => {

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Search, TrendingUp, AlertCircle, Lightbulb } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import api from '@/services/api';
+import api, { APIError } from '@/services/api';
 import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
@@ -31,7 +31,19 @@ const CompetitorAnalysis: React.FC = () => {
             toast.success("Analysis complete!");
         } catch (error) {
             console.error(error);
-            toast.error("Failed to analyze competitor. Please try again.");
+            
+            // Handle specific API errors
+            if (error instanceof APIError) {
+                if (error.status === 401) {
+                    toast.error("Please log in to analyze competitors.");
+                } else if (error.status === 403) {
+                    toast.error("You don't have permission to access this feature.");
+                } else {
+                    toast.error(error.message || "Failed to analyze competitor. Please try again.");
+                }
+            } else {
+                toast.error("Failed to analyze competitor. Please try again.");
+            }
         } finally {
             setLoading(false);
         }

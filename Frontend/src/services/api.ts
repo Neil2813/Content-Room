@@ -173,7 +173,14 @@ export interface ScheduledPost {
 }
 
 // Analytics Types
-
+export interface DashboardMetrics {
+  total_content: number;
+  content_this_week: number;
+  moderation_safe: number;
+  moderation_flagged: number;
+  scheduled_posts: number;
+  published_posts: number;
+}
 
 export interface ModerationStats {
   total_moderated: number;
@@ -543,7 +550,49 @@ export const schedulerAPI = {
   },
 };
 
+// ============================================
+// Analytics API
+// ============================================
 
+export const analyticsAPI = {
+  async getDashboard(userId?: number, platform?: string): Promise<DashboardMetrics> {
+    let url = `${API_V1}/analytics/dashboard`;
+    const params = new URLSearchParams();
+    if (platform && platform !== 'all') {
+      params.append('platform', platform);
+    }
+    const paramStr = params.toString();
+    if (paramStr) url += `?${paramStr}`;
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<DashboardMetrics>(response);
+  },
+
+  async getModerationStats(userId?: number, platform?: string): Promise<ModerationStats> {
+    let url = `${API_V1}/analytics/moderation`;
+    const params = new URLSearchParams();
+    if (platform && platform !== 'all') {
+      params.append('platform', platform);
+    }
+    const paramStr = params.toString();
+    if (paramStr) url += `?${paramStr}`;
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<ModerationStats>(response);
+  },
+
+  async getProviderStats(): Promise<ProviderStats> {
+    const response = await fetch(`${API_V1}/analytics/providers`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<ProviderStats>(response);
+  },
+};
+
+// ============================================
+// Translation API
 // ============================================
 
 export const translationAPI = {
@@ -582,15 +631,214 @@ export const translationAPI = {
 // Social Connect API
 // ============================================
 
+export interface PlatformStatus {
+  platform: string;
+  configured: boolean;
+  connected: boolean;
+  auth_type: 'oauth' | 'credentials';
+  note?: string;
+}
 
+export interface AllPlatformsStatus {
+  platforms: {
+    twitter: PlatformStatus & { note: string };
+    instagram: PlatformStatus & { note: string };
+    linkedin: PlatformStatus & { note: string };
+  };
+  scheduler: {
+    running: boolean;
+    pending_posts: number;
+  };
+}
 
+export interface PublishResponse {
+  success: boolean;
+  platform: string;
+  post_id?: string;
+  post_url?: string;
+  error?: string;
+  mode?: string;
+}
 
+export const socialConnectAPI = {
+  // Get all platforms status
+  async getAllStatus(userId = 1): Promise<AllPlatformsStatus> {
+    const response = await fetch(`${API_V1}/social/status?user_id=${userId}`);
+    return handleResponse<AllPlatformsStatus>(response);
+  },
 
+  // Twitter (using credentials - no API key needed!)
+  twitter: {
+    async getStatus(userId = 1): Promise<PlatformStatus> {
+      const response = await fetch(`${API_V1}/social/twitter/status?user_id=${userId}`);
+      return handleResponse<PlatformStatus>(response);
+    },
 
+    async connect(username: string, email: string, password: string, userId = 1): Promise<{ success: boolean; message: string }> {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('user_id', userId.toString());
 
+      const response = await fetch(`${API_V1}/social/twitter/connect`, {
+        method: 'POST',
+        body: formData,
+      });
+      return handleResponse(response);
+    },
 
+    async connectCookies(cookies: CookieData[], userId = 1): Promise<{ success: boolean; message: string }> {
+      const response = await fetch(`${API_V1}/social/twitter/connect-cookies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookies, user_id: userId }),
+      });
+      return handleResponse(response);
+    },
 
+    async disconnect(userId = 1): Promise<{ success: boolean }> {
+      const response = await fetch(`${API_V1}/social/twitter/disconnect?user_id=${userId}`, {
+        method: 'DELETE',
+      });
+      return handleResponse(response);
+    },
 
+    async publish(content: string, mediaUrls?: string[], userId = 1): Promise<PublishResponse> {
+      const response = await fetch(`${API_V1}/social/twitter/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, media_urls: mediaUrls, user_id: userId }),
+      });
+      return handleResponse<PublishResponse>(response);
+    },
+  },
+
+  // Instagram (OAuth via Facebook)
+  instagram: {
+    async getStatus(userId = 1): Promise<PlatformStatus> {
+      const response = await fetch(`${API_V1}/social/instagram/status?user_id=${userId}`);
+      return handleResponse<PlatformStatus>(response);
+    },
+
+    async getConnectUrl(userId = 1, redirectUri?: string): Promise<{ url: string; platform: string }> {
+      const params = new URLSearchParams({ user_id: userId.toString() });
+      if (redirectUri) params.append('redirect_uri', redirectUri);
+
+      const response = await fetch(`${API_V1}/social/instagram/connect?${params}`);
+      return handleResponse(response);
+    },
+
+    async disconnect(userId = 1): Promise<{ success: boolean }> {
+      const response = await fetch(`${API_V1}/social/instagram/disconnect?user_id=${userId}`, {
+        method: 'DELETE',
+      });
+      return handleResponse(response);
+    },
+
+    async publish(content: string, mediaUrls?: string[], userId = 1): Promise<PublishResponse> {
+      const response = await fetch(`${API_V1}/social/instagram/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, media_urls: mediaUrls, user_id: userId }),
+      });
+      return handleResponse<PublishResponse>(response);
+    },
+  },
+
+  // LinkedIn (OAuth)
+  linkedin: {
+    async getStatus(userId = 1): Promise<PlatformStatus> {
+      const response = await fetch(`${API_V1}/social/linkedin/status?user_id=${userId}`);
+      return handleResponse<PlatformStatus>(response);
+    },
+
+    async getConnectUrl(userId = 1, redirectUri?: string): Promise<{ url: string; platform: string }> {
+      const params = new URLSearchParams({ user_id: userId.toString() });
+      if (redirectUri) params.append('redirect_uri', redirectUri);
+
+      const response = await fetch(`${API_V1}/social/linkedin/connect?${params}`);
+      return handleResponse(response);
+    },
+
+    async disconnect(userId = 1): Promise<{ success: boolean }> {
+      const response = await fetch(`${API_V1}/social/linkedin/disconnect?user_id=${userId}`, {
+        method: 'DELETE',
+      });
+      return handleResponse(response);
+    },
+
+    async publish(content: string, mediaUrls?: string[], userId = 1): Promise<PublishResponse> {
+      const response = await fetch(`${API_V1}/social/linkedin/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, media_urls: mediaUrls, user_id: userId }),
+      });
+      return handleResponse<PublishResponse>(response);
+    },
+  },
+};
+
+// ============================================
+// History API
+// ============================================
+
+export interface HistoryItem {
+  id: number;
+  item_type: 'content' | 'scheduled';
+  title: string;
+  description?: string;
+  status: string;
+  platform?: string;
+  safety_score?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface HistoryResponse {
+  items: HistoryItem[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface HistoryStats {
+  total_content: number;
+  total_scheduled: number;
+  published_count: number;
+  moderated_count: number;
+  this_week_content: number;
+  this_week_scheduled: number;
+}
+
+export const historyAPI = {
+  async getHistory(
+    itemType?: 'content' | 'scheduled',
+    timeRange?: 'today' | 'week' | 'month',
+    page = 1,
+    pageSize = 20
+  ): Promise<HistoryResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    });
+    if (itemType) params.append('item_type', itemType);
+    if (timeRange) params.append('time_range', timeRange);
+
+    const response = await fetch(`${API_V1}/history?${params}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<HistoryResponse>(response);
+  },
+
+  async getStats(): Promise<HistoryStats> {
+    const response = await fetch(`${API_V1}/history/stats`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<HistoryStats>(response);
+  },
+};
 
 // ============================================
 // Health Check
@@ -641,7 +889,10 @@ const api = {
   creation: creationAPI,
   moderation: moderationAPI,
   scheduler: schedulerAPI,
-
+  analytics: analyticsAPI,
+  translation: translationAPI,
+  socialConnect: socialConnectAPI,
+  history: historyAPI,
   competitor: competitorAPI,
   calendar: calendarAPI,
   checkHealth: checkBackendHealth,

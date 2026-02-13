@@ -1,90 +1,51 @@
-# Content Room Backend
+# Content Room - Backend 🔧
 
-**AWS-native AI Content Workflow Engine** with resilient fallback architecture.
+**FastAPI-powered AI Content Management API**
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg)](https://fastapi.tiangolo.com)
-[![AWS](https://img.shields.io/badge/AWS-primary-orange.svg)](https://aws.amazon.com)
-[![Status](https://img.shields.io/badge/Status-Complete-success.svg)]()
+This is the backend service for Content Room, providing RESTful APIs for content creation, moderation, scheduling, and AI-powered features.
 
-## ✅ Implementation Status
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Backend Foundation | ✅ Complete | FastAPI, SQLite, Argon2 auth |
-| LLM Fallback Chain | ✅ Complete | Bedrock → Grok → Gemini → Ollama |
-| Vision Service | ✅ Complete | Rekognition → OpenCV |
-| Speech Service | ✅ Complete | Transcribe → Whisper |
-| Translation Service | ✅ Complete | Translate → Google Free |
-| Moderation Pipeline | ✅ Complete | 3-tier architecture |
-| Storage Service | ✅ Complete | S3 → Firebase → Local |
-| Task Scheduler | ✅ Complete | Background jobs + Social Queue |
-| Social Integration | ✅ Complete | Twitter (Twikit), Instagram, LinkedIn |
-| Frontend Integration | ✅ Complete | API client + page connections |
-| Security Hardening | ✅ Complete | Rate limiting, CORS, secrets management |
-
+---
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- Python 3.10 or higher
+- PostgreSQL (or SQLite for development)
+- OpenAI API key (for content generation)
+- AWS credentials (optional, for advanced moderation)
+
+### Installation
+
+1. **Install dependencies**
 ```bash
-# Create virtual environment
-python -m venv venv
-.\venv\Scripts\Activate.ps1    # Windows
-source venv/bin/activate  # Linux/Mac
-
-# Install dependencies
 pip install -r requirements.txt
+```
 
-# Configure environment
-# Edit .env with your API keys (AWS, Grok, Gemini)
+2. **Set up environment variables**
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
 
-# Run server
+3. **Initialize the database**
+```bash
+# Database will be created automatically on first run
+# For PostgreSQL, ensure the database exists
+```
+
+4. **Run the server**
+```bash
+# Development (with auto-reload)
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Production
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-**API Docs:** http://localhost:8000/docs
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Content Room API Gateway (Port 8000)           │
-├─────────────────────────────────────────────────────────────┤
-│  Routers                                                    │
-│  ├── /api/v1/auth/*        → Authentication (JWT + Argon2) │
-│  ├── /api/v1/create/*      → Content Generation (LLM)      │
-│  ├── /api/v1/moderate/*    → Multimodal Moderation         │
-│  ├── /api/v1/translate/*   → 9 Indian Languages + English  │
-│  ├── /api/v1/schedule/*    → Distribution Queue            │
-│  └── /api/v1/analytics/*   → Performance Metrics           │
-├─────────────────────────────────────────────────────────────┤
-│  Services (AWS-first + Free Fallbacks)                      │
-│  ├── llm_service        Bedrock → Grok → Gemini → Ollama   │
-│  ├── vision_service     Rekognition → OpenCV               │
-│  ├── speech_service     Transcribe → Whisper               │
-│  ├── translation_service Translate → Google (free)         │
-│  └── moderation_service Comprehend → LLM                   │
-├─────────────────────────────────────────────────────────────┤
-│  Database: SQLite (aiosqlite) - Zero cost                   │
-│  Auth: JWT + Argon2 (PHC winner)                            │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔄 Fallback Strategy
-
-Every AWS service has a **free fallback** for reliability:
-
-| Service | AWS Primary | Free Fallback | Offline Fallback |
-|---------|-------------|---------------|------------------|
-| **LLM** | Bedrock (Claude/Titan) | Grok → Gemini | Ollama (local) |
-| **Vision** | Rekognition | - | OpenCV (local) |
-| **Speech** | Transcribe | Google Speech | Whisper (local) |
-| **Translation** | Translate | Google Translate | - |
-| **Toxicity** | Comprehend | - | LLM fallback |
+5. **Access the API**
+- API: http://localhost:8000
+- Interactive Docs: http://localhost:8000/docs
+- Alternative Docs: http://localhost:8000/redoc
 
 ---
 
@@ -92,163 +53,306 @@ Every AWS service has a **free fallback** for reliability:
 
 ```
 Backend/
-├── main.py                 # FastAPI entry point
-├── database.py             # Async SQLite with SQLAlchemy
-├── requirements.txt        # Dependencies
-├── .env.example            # Environment template
-│
-├── config/
-│   └── settings.py         # Pydantic settings with fallback detection
-│
-├── models/
-│   ├── user.py             # User model (Argon2 password)
-│   ├── content.py          # Content + moderation results
-│   └── schedule.py         # Scheduled posts
-│
-├── routers/
-│   ├── auth.py             # Register, login, profile
-│   ├── creation.py         # Caption, summary, hashtags
-│   ├── moderation.py       # Text, image, audio, multimodal
-│   ├── translation.py      # Translate, detect, languages
-│   ├── scheduler.py        # CRUD for scheduled posts
-│   └── analytics.py        # Dashboard metrics
-│
-├── services/
-│   ├── llm_service.py      # LLM fallback chain
-│   ├── vision_service.py   # Image analysis
-│   ├── speech_service.py   # Audio transcription
-│   ├── translation_service.py  # Multilingual support
-│   └── moderation_service.py   # 3-tier moderation
-│
-└── utils/
-    └── logging.py          # Structured logging
+├── main.py                 # FastAPI application entry point
+├── config.py              # Configuration management
+├── database.py            # Database connection & session
+├── requirements.txt       # Python dependencies
+├── routers/              # API route handlers
+│   ├── auth.py           # Authentication endpoints
+│   ├── calendar.py       # Content calendar generation
+│   ├── competitor.py     # Competitor analysis
+│   ├── creation.py       # Content creation tools
+│   ├── moderation.py     # Content moderation
+│   └── scheduler.py      # Post scheduling
+├── models/               # SQLAlchemy database models
+│   ├── user.py           # User model
+│   └── content.py        # Content & scheduling models
+└── services/             # Business logic & integrations
+    ├── ai_service.py     # AI/LLM integrations
+    ├── calendar_service.py
+    ├── competitor_service.py
+    └── aws_service.py    # AWS AI services
 ```
 
 ---
 
-## 🔧 Environment Variables
+## 🔐 Authentication
 
-```bash
-# AWS (PRIMARY)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1
+### JWT-Based Authentication
+- **Algorithm**: HS256
+- **Password Hashing**: Argon2 (PHC winner, more secure than bcrypt)
+- **Token Expiration**: Configurable (default: 30 days)
 
-# AWS Service Toggles
-USE_AWS_BEDROCK=true
-USE_AWS_REKOGNITION=true
-USE_AWS_TRANSCRIBE=true
-USE_AWS_TRANSLATE=true
-USE_AWS_COMPREHEND=true
+### Authentication Modes
+- **Required**: Some endpoints require authentication
+- **Optional**: Many endpoints work with or without auth
+  - Competitor analysis
+  - Content calendar generation
+  - All creation tools
 
-# LLM Fallbacks
-GROK_API_KEY=          # https://console.x.ai/
-GEMINI_API_KEY=        # https://makersuite.google.com/app/apikey
-OLLAMA_BASE_URL=http://localhost:11434
+### Dependencies
+- `get_current_user`: Requires valid JWT token
+- `get_current_user_optional`: Returns None if not authenticated
 
+---
+
+## 🛠️ API Endpoints
+
+### Authentication (`/api/v1/auth`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/register` | Create new user account | No |
+| POST | `/login` | Login with credentials | No |
+| GET | `/profile` | Get user profile | Yes |
+| POST | `/logout` | Logout user | Yes |
+
+### Content Creation (`/api/v1/create`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/caption` | Generate AI caption | No |
+| POST | `/summary` | Generate content summary | No |
+| POST | `/hashtags` | Generate relevant hashtags | No |
+| POST | `/rewrite` | Rewrite with different tone | No |
+
+### Content Moderation (`/api/v1/moderate`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/text` | Moderate text content | Optional |
+| POST | `/image` | Moderate image content | Optional |
+| POST | `/audio` | Moderate audio content | Optional |
+| POST | `/video` | Moderate video content | Optional |
+| POST | `/multimodal` | Moderate mixed content | Optional |
+
+### Competitor Analysis (`/api/v1/competitor`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/analyze` | Analyze competitor profile | Optional |
+
+### Content Calendar (`/api/v1/calendar`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/generate` | Generate monthly calendar | Optional |
+
+### Post Scheduling (`/api/v1/schedule`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/` | List scheduled posts | Yes |
+| POST | `/` | Create scheduled post | Yes |
+| GET | `/{id}` | Get post details | Yes |
+| DELETE | `/{id}` | Cancel scheduled post | Yes |
+
+### Social Platforms (`/api/v1/social`)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/status` | Get all platforms status | No |
+| POST | `/twitter/connect` | Connect Twitter account | No |
+| POST | `/twitter/publish` | Publish to Twitter | No |
+| GET | `/instagram/connect` | Get Instagram OAuth URL | No |
+| POST | `/linkedin/connect` | Get LinkedIn OAuth URL | No |
+
+---
+
+## 🤖 AI Services Integration
+
+### OpenAI GPT
+- **Caption Generation**: Context-aware captions with platform optimization
+- **Summary Generation**: Intelligent content summarization
+- **Hashtag Generation**: Relevant hashtag suggestions
+- **Tone Rewriting**: Multiple tone transformations
+- **Competitor Analysis**: Strategic content gap analysis
+- **Calendar Generation**: AI-powered content planning
+
+### AWS AI Services (Optional)
+- **Rekognition**: Image & video moderation
+- **Transcribe**: Audio transcription
+- **Comprehend**: Text sentiment analysis
+
+### Fallback System
+Automatic fallback to alternative providers if primary service fails.
+
+---
+
+## 🗄️ Database Models
+
+### User
+```python
+- id: Integer (Primary Key)
+- name: String
+- email: String (Unique)
+- hashed_password: String
+- is_active: Boolean
+- preferred_language: String
+- created_at: DateTime
+```
+
+### Content
+```python
+- id: Integer (Primary Key)
+- user_id: Integer (Foreign Key, nullable)
+- content_type: String
+- original_text: Text
+- caption: Text
+- summary: Text
+- hashtags: JSON
+- moderation_status: String
+- workflow_status: String
+- created_at: DateTime
+```
+
+### ScheduledPost
+```python
+- id: Integer (Primary Key)
+- user_id: Integer (Foreign Key)
+- title: String
+- description: Text
+- scheduled_at: DateTime
+- status: String
+- platform: String
+- moderation_passed: Boolean
+```
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables (`.env`)
+
+```env
 # Database
-DATABASE_URL=sqlite+aiosqlite:///./content_room.db
+DATABASE_URL=postgresql://user:password@localhost/contentroom
+# Or for SQLite (development):
+# DATABASE_URL=sqlite:///./content_room.db
 
 # Security
-SECRET_KEY=your-secret-key
+SECRET_KEY=your-super-secret-key-min-32-chars
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=43200  # 30 days
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# AWS (Optional)
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1
+
+# Application
+ENVIRONMENT=development
+DEBUG=true
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
 ---
 
-## 🛡️ Moderation Pipeline
+## 🔄 Recent Updates
 
-**3-Tier Architecture** (inspired by Multil-Modal-Moderation-Pipeline):
+### v2.0.0 - Authentication Optional
+- ✅ Made authentication optional for most endpoints
+- ✅ Competitor analysis works without login
+- ✅ Calendar generation works without login
+- ✅ History saved only for authenticated users
+- ✅ Improved error handling and user feedback
 
-```
-┌─────────────────────────────────────────────────────┐
-│ Tier 1: Edge Prefilter (<100ms)                     │
-│   - Keyword detection                               │
-│   - Color space analysis (skin tone, blood colors)  │
-│   - Fast reject for obvious violations              │
-├─────────────────────────────────────────────────────┤
-│ Tier 2: Deep Analysis (1-8s)                        │
-│   - AWS Comprehend (toxicity detection)             │
-│   - AWS Rekognition (moderation labels)             │
-│   - LLM reasoning (context understanding)           │
-│   - Whisper transcription (for audio/video)         │
-├─────────────────────────────────────────────────────┤
-│ Tier 3: Decision Engine                             │
-│   - Safety score 0-100                              │
-│   - Decision: ALLOW / FLAG / ESCALATE               │
-│   - Critical flags auto-escalate                    │
-└─────────────────────────────────────────────────────┘
-```
-
----
-
-## 📝 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Create new user |
-| POST | `/api/v1/auth/login` | Get JWT token |
-| GET | `/api/v1/auth/me` | Current user profile |
-| POST | `/api/v1/auth/logout` | Logout (client-side) |
-
-### Content Creation
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/create/caption` | Generate caption |
-| POST | `/api/v1/create/summary` | Generate summary |
-| POST | `/api/v1/create/hashtags` | Generate hashtags |
-| POST | `/api/v1/create/rewrite` | Rewrite with tone |
-
-### Moderation
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/moderate/text` | Moderate text |
-| POST | `/api/v1/moderate/image` | Moderate image |
-| POST | `/api/v1/moderate/audio` | Moderate audio |
-| POST | `/api/v1/moderate/multimodal` | Combined analysis |
-
-### Translation
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/translate/text` | Translate text |
-| POST | `/api/v1/translate/detect` | Detect language |
-| GET | `/api/v1/translate/languages` | Supported languages |
-
----
-
-## 🌐 Supported Languages
-
-| Code | Language | Native |
-|------|----------|--------|
-| en | English | English |
-| hi | Hindi | हिंदी |
-| te | Telugu | తెలుగు |
-| ta | Tamil | தமிழ் |
-| bn | Bengali | বাংলা |
-| kn | Kannada | ಕನ್ನಡ |
-| ml | Malayalam | മലയാളം |
-| gu | Gujarati | ગુજરાતી |
-| or | Odia | ଓଡ଼ିଆ |
+### Features
+- ✅ JWT authentication with Argon2 password hashing
+- ✅ Async SQLAlchemy for better performance
+- ✅ Comprehensive input validation with Pydantic
+- ✅ AI service fallback system
+- ✅ Social media platform integration
+- ✅ Multi-modal content moderation
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Run tests
+# Run all tests
 pytest
 
-# Test health endpoint
-curl http://localhost:8000/health
+# Run with coverage
+pytest --cov=. --cov-report=html
 
-# Test auth registration
-curl -X POST http://localhost:8000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test", "email": "test@example.com", "password": "password123"}'
+# Run specific test file
+pytest tests/test_auth.py
 ```
+
+---
+
+## 📊 Performance
+
+- **Async/Await**: Full async support for concurrent requests
+- **Connection Pooling**: Efficient database connection management
+- **Response Caching**: Smart caching for frequently accessed data
+- **Rate Limiting**: Built-in protection against abuse
+
+---
+
+## 🛡️ Security Features
+
+- **Argon2 Password Hashing**: Industry-leading security
+- **JWT Tokens**: Stateless authentication
+- **CORS Protection**: Configurable origins
+- **SQL Injection Prevention**: SQLAlchemy ORM protection
+- **Input Validation**: Pydantic schema validation
+- **Content Moderation**: AI-powered safety checks
+
+---
+
+## 🐛 Debugging
+
+### Enable Debug Mode
+```bash
+DEBUG=true uvicorn main:app --reload --log-level debug
+```
+
+### View Logs
+```bash
+# Application logs
+tail -f app.log
+
+# Database queries
+# Set echo=True in database.py
+```
+
+---
+
+## 📦 Dependencies
+
+### Core
+- `fastapi` - Modern web framework
+- `uvicorn` - ASGI server
+- `sqlalchemy` - ORM with async support
+- `pydantic` - Data validation
+- `python-jose` - JWT handling
+- `argon2-cffi` - Password hashing
+
+### AI Services
+- `openai` - OpenAI API client
+- `boto3` - AWS SDK
+- `aiohttp` - Async HTTP client
+
+### Database
+- `asyncpg` - PostgreSQL async driver
+- `aiosqlite` - SQLite async driver
+
+See `requirements.txt` for complete list.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ---
 
 ## 📄 License
 
-MIT License - Built for AWS Hackathon
+MIT License - See LICENSE file for details
+
+---
+
+**Backend API Documentation**: http://localhost:8000/docs

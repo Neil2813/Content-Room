@@ -166,21 +166,24 @@ from routers import scheduler
 app.include_router(scheduler.router, prefix="/api/v1/schedule", tags=["Scheduling"])
 
 # 6. Analytics Router
-
+from routers import analytics
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
 
 # 7. Media Router (NEW)
 from routers import media
 app.include_router(media.router, prefix="/api/v1/media", tags=["Media"])
 
 # 8. Social Connect Router (NEW)
-
+from routers import social_connect
+app.include_router(social_connect.router, prefix="/api/v1/social", tags=["Social Media"])
 
 # 9. Content Router (My Content pipeline)
 from routers import content
 app.include_router(content.router, prefix="/api/v1/content", tags=["Content"])
 
 # 10. History Router
-
+from routers import history
+app.include_router(history.router, prefix="/api/v1/history", tags=["History"])
 
 # 11. Competitor Analysis Router (NEW)
 from routers import competitor

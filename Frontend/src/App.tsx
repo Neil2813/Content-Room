@@ -44,22 +44,23 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={<Navigate to="/studio" replace />} />
-              <Route path="/studio" element={<ProtectedRoute><Studio /></ProtectedRoute>} />
-              <Route path="/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
-              <Route path="/scheduler" element={<ProtectedRoute><Scheduler /></ProtectedRoute>} />
-              <Route path="/competitor" element={<ProtectedRoute><CompetitorAnalysis /></ProtectedRoute>} />
-              <Route path="/calendar" element={<ProtectedRoute><ContentCalendar /></ProtectedRoute>} />
-              <Route path="/history" element={<Navigate to="/studio" replace />} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              {/* Open Routes (No Authentication Required) */}
+              <Route path="/studio" element={<Studio />} />
+              <Route path="/moderation" element={<Moderation />} />
+              <Route path="/scheduler" element={<Scheduler />} />
+              <Route path="/competitor" element={<CompetitorAnalysis />} />
+              <Route path="/calendar" element={<ContentCalendar />} />
+              <Route path="/settings" element={<Settings />} />
               
               {/* Redirects for removed pages */}
+              <Route path="/dashboard" element={<Navigate to="/studio" replace />} />
+              <Route path="/history" element={<Navigate to="/studio" replace />} />
               <Route path="/analytics" element={<Navigate to="/studio" replace />} />
               <Route path="/content" element={<Navigate to="/studio" replace />} />
               <Route path="/profile" element={<Navigate to="/settings" replace />} />
               <Route path="/platforms" element={<Navigate to="/settings" replace />} />
               <Route path="/translation" element={<Navigate to="/studio" replace />} />
+              
               
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
