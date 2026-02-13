@@ -35,7 +35,7 @@ export default function Login() {
         title: 'Welcome back!',
         description: 'You have been logged in successfully to Content Room.',
       });
-      navigate('/dashboard');
+      navigate('/studio');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to login. Please try again.';
       toast({

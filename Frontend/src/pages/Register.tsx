@@ -55,7 +55,7 @@ export default function Register() {
         title: 'Account created!',
         description: 'Welcome to Content Room.',
       });
-      navigate('/dashboard');
+      navigate('/studio');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create account. Please try again.';
       toast({
