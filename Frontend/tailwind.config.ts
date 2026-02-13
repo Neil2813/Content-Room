@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -77,10 +78,10 @@ export default {
         xl: "1rem",
         "2xl": "1.5rem",
       },
-      boxShadow: {
-        soft: "0 2px 8px hsl(0 54% 22% / 0.06)",
-        medium: "0 4px 16px hsl(0 54% 22% / 0.08)",
-        large: "0 8px 32px hsl(0 54% 22% / 0.1)",
+        boxShadow: {
+        soft: "var(--shadow-soft)",
+        medium: "var(--shadow-medium)",
+        large: "var(--shadow-large)",
       },
       keyframes: {
         "accordion-down": {
@@ -108,5 +109,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,14 @@ import { Calendar, Clock, Plus, Trash2, Loader2, CheckCircle, AlertCircle, Refre
 import { schedulerAPI, ScheduledPost, APIError } from '@/services/api';
 
 export default function Scheduler() {
+  const [searchParams] = useSearchParams();
+  const contentIdParam = searchParams.get('contentId');
+  const contentId = useMemo(() => {
+    if (!contentIdParam) return undefined;
+    const n = parseInt(contentIdParam, 10);
+    return Number.isNaN(n) ? undefined : n;
+  }, [contentIdParam]);
+
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -62,6 +71,7 @@ export default function Scheduler() {
         description: newPost.content || undefined,
         scheduled_at: scheduledAt,
         platform: newPost.platform || undefined,
+        content_id: contentId,
       });
 
       setPosts([...posts, createdPost]);
@@ -262,6 +272,7 @@ export default function Scheduler() {
                     value={newPost.platform}
                     onChange={(e) => setNewPost({ ...newPost, platform: e.target.value })}
                     className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    aria-label="Select platform for post"
                   >
                     {platforms.map((p) => (
                       <option key={p.value} value={p.value}>{p.label}</option>

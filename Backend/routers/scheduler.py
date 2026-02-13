@@ -28,6 +28,7 @@ class ScheduleRequest(BaseModel):
     scheduled_at: datetime
     platform: Optional[str] = None
     user_id: int = 1  # Default user for demo
+    content_id: Optional[int] = None  # Link to Content (My Content pipeline)
     media_url: Optional[str] = None  # URL of media to moderate
     skip_moderation: bool = False  # For testing only
 
@@ -141,6 +142,7 @@ async def schedule_post(
     # Create the scheduled post
     post = ScheduledPost(
         user_id=request.user_id,
+        content_id=request.content_id,
         title=request.title,
         description=request.description,
         scheduled_at=request.scheduled_at,

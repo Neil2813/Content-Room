@@ -1,5 +1,5 @@
 """
-ContentOS Backend - Main Application Entry Point
+Content Room Backend - Main Application Entry Point
 
 AWS-native AI Content Workflow Engine with resilient fallback architecture.
 All features enabled - no authentication required for AI services.
@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 # Create FastAPI application
 app = FastAPI(
-    title="ContentOS API",
+    title="Content Room API",
     description="AI-powered Content Workflow Engine with AWS + Free Fallback Architecture.",
     version="1.0.0",
     lifespan=lifespan,
@@ -70,23 +70,32 @@ app = FastAPI(
 
 
 # CORS Middleware - Use configured origins in production
+# Allow common development origins explicitly for better header support
+dev_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:8080",
+    "http://localhost:8081",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8081",
+]
+
 if settings.debug:
-    # Allow all origins in development
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=True,
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["*"],
     )
 else:
-    # Use configured origins in production
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["*"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
     )
 
 # Rate Limiting Middleware
@@ -164,10 +173,18 @@ app.include_router(media.router, prefix="/api/v1/media", tags=["Media"])
 from routers import social_connect
 app.include_router(social_connect.router, prefix="/api/v1/social", tags=["Social Media"])
 
+# 9. Content Router (My Content pipeline)
+from routers import content
+app.include_router(content.router, prefix="/api/v1/content", tags=["Content"])
+
+# 10. History Router
+from routers import history
+app.include_router(history.router, prefix="/api/v1/history", tags=["History"])
+
 
 @app.get("/", tags=["System"])
 async def root():
-    return {"message": "ContentOS API", "docs": "/docs"}
+    return {"message": "Content Room API", "docs": "/docs"}
 
 
 if __name__ == "__main__":

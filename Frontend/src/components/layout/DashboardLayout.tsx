@@ -6,15 +6,12 @@ import {
   Wand2,
   Shield,
   Calendar,
-  BarChart3,
-  User,
   Settings,
   LogOut,
   Menu,
   X,
   LayoutDashboard,
-  Share2,
-  Languages,
+  History,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,10 +24,7 @@ const sidebarItems = [
   { icon: Wand2, label: 'Creator Studio', path: '/studio' },
   { icon: Shield, label: 'Moderation', path: '/moderation' },
   { icon: Calendar, label: 'Scheduler', path: '/scheduler' },
-  { icon: Share2, label: 'Platforms', path: '/platforms' },
-  { icon: Languages, label: 'Translation', path: '/translation' },
-  { icon: BarChart3, label: 'Analytics', path: '/analytics' },
-  { icon: User, label: 'Profile', path: '/profile' },
+  { icon: History, label: 'History', path: '/history' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 

@@ -9,9 +9,9 @@ import { Shield, Upload, CheckCircle, AlertTriangle, XCircle, Loader2, FileImage
 import { moderationAPI, APIError, ModerationResponse, MultimodalModerationResponse } from '@/services/api';
 
 interface ModerationResult {
-  safetyScore: number;
-  flags: string[];
   explanation: string;
+  flaggedContent: string;
+  flags: string[];
   status: 'safe' | 'warning' | 'unsafe';
   decision: string;
   provider?: string;
@@ -63,14 +63,15 @@ export default function Moderation() {
   ): ModerationResult => {
     if (isMultimodal) {
       const multiRes = apiResult as MultimodalModerationResponse;
+      // Derive status from decision
       const status: 'safe' | 'warning' | 'unsafe' = 
-        multiRes.overall_safety_score >= 70 ? 'safe' :
-        multiRes.overall_safety_score >= 40 ? 'warning' : 'unsafe';
+        multiRes.decision === 'ALLOW' ? 'safe' :
+        multiRes.decision === 'FLAG' ? 'warning' : 'unsafe';
       
       return {
-        safetyScore: multiRes.overall_safety_score,
-        flags: multiRes.combined_flags,
         explanation: `Multimodal content analyzed. Decision: ${multiRes.decision}`,
+        flaggedContent: '',
+        flags: multiRes.combined_flags,
         status,
         decision: multiRes.decision,
         fileResults: {
@@ -87,14 +88,15 @@ export default function Moderation() {
     }
 
     const singleRes = apiResult as ModerationResponse;
+    // Derive status from decision
     const status: 'safe' | 'warning' | 'unsafe' = 
-      singleRes.safety_score >= 70 ? 'safe' :
-      singleRes.safety_score >= 40 ? 'warning' : 'unsafe';
+      singleRes.decision === 'ALLOW' ? 'safe' :
+      singleRes.decision === 'FLAG' ? 'warning' : 'unsafe';
     
     return {
-      safetyScore: singleRes.safety_score,
+      explanation: singleRes.explanation || 'Content analyzed.',
+      flaggedContent: (singleRes as ModerationResponse & { flagged_content?: string }).flagged_content || '',
       flags: singleRes.flags,
-      explanation: singleRes.explanation || `Content analyzed with ${(singleRes.confidence * 100).toFixed(0)}% confidence.`,
       status,
       decision: singleRes.decision,
       provider: singleRes.provider,
@@ -126,17 +128,17 @@ export default function Moderation() {
         // Video only - analyze frames using backend
         const videoRes = await moderationAPI.moderateVideo(videoFile);
         const status: 'safe' | 'warning' | 'unsafe' = 
-          (videoRes.safety_score || 100) >= 70 ? 'safe' :
-          (videoRes.safety_score || 100) >= 40 ? 'warning' : 'unsafe';
+          (videoRes.decision || 'ALLOW') === 'ALLOW' ? 'safe' :
+          (videoRes.decision || 'ALLOW') === 'FLAG' ? 'warning' : 'unsafe';
         
         const framesInfo = videoRes.video_info 
           ? `Analyzed ${videoRes.video_info.frames_analyzed} frames from ${videoRes.video_info.duration_seconds}s video.`
           : '';
         
         setResult({
-          safetyScore: videoRes.safety_score || 100,
-          flags: videoRes.flags || [],
           explanation: `Video "${videoFile.name}" analyzed. ${framesInfo}`,
+          flaggedContent: '',
+          flags: videoRes.flags || [],
           status,
           decision: videoRes.decision || 'ALLOW',
           provider: (videoRes as unknown as { provider?: string }).provider,
@@ -145,9 +147,9 @@ export default function Moderation() {
         // Image only
         const imageRes = await moderationAPI.moderateImage(imageFile);
         setResult({
-          safetyScore: imageRes.safety_score || 100,
-          flags: (imageRes as unknown as { flags?: string[] }).flags || [],
           explanation: `Image "${imageFile.name}" analyzed.`,
+          flaggedContent: '',
+          flags: (imageRes as unknown as { flags?: string[] }).flags || [],
           status: (imageRes as unknown as { is_safe?: boolean }).is_safe !== false ? 'safe' : 'unsafe',
           decision: (imageRes as unknown as { is_safe?: boolean }).is_safe !== false ? 'ALLOW' : 'FLAG',
         });
@@ -155,11 +157,11 @@ export default function Moderation() {
         // Audio only
         const audioRes = await moderationAPI.moderateAudio(audioFile);
         setResult({
-          safetyScore: audioRes.safety_score || 100,
-          flags: (audioRes as unknown as { flags?: string[] }).flags || [],
           explanation: audioRes.transcript 
             ? `Audio transcribed: "${audioRes.transcript.substring(0, 100)}${audioRes.transcript.length > 100 ? '...' : ''}"`
             : `Audio "${audioFile.name}" analyzed.`,
+          flaggedContent: '',
+          flags: (audioRes as unknown as { flags?: string[] }).flags || [],
           status: 'safe',
           decision: (audioRes as unknown as { decision?: string }).decision || 'ALLOW',
         });
@@ -277,6 +279,7 @@ export default function Moderation() {
                   className="hidden"
                   accept="image/*"
                   onChange={handleImageUpload}
+                  aria-label="Upload image file"
                 />
                 {imageFile ? (
                   <div className="relative">
@@ -318,6 +321,7 @@ export default function Moderation() {
                   className="hidden"
                   accept="audio/*"
                   onChange={handleAudioUpload}
+                  aria-label="Upload audio file"
                 />
                 {audioFile ? (
                   <div className="relative">
@@ -361,6 +365,7 @@ export default function Moderation() {
                   className="hidden"
                   accept="video/*"
                   onChange={handleVideoUpload}
+                  aria-label="Upload video file"
                 />
                 {videoFile ? (
                   <div className="relative inline-block">
@@ -434,28 +439,22 @@ export default function Moderation() {
                 <div className="flex-1">
                   <p className="font-semibold">{getStatusLabel(result.status)}</p>
                   <p className="text-sm text-muted-foreground">
-                    Safety Score: {result.safetyScore}/100 • Decision: {result.decision}
+                    Decision: {result.decision}
                   </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{result.safetyScore}%</div>
-                  <div className="text-xs text-muted-foreground">Safe</div>
                 </div>
               </div>
 
-              {/* Safety Score Bar */}
-              <div>
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Safety Meter</Label>
-                <div className="mt-2 h-3 bg-primary/10 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${
-                      result.safetyScore >= 70 ? 'bg-emerald-500' :
-                      result.safetyScore >= 40 ? 'bg-amber-500' : 'bg-rose-500'
-                    }`}
-                    style={{ width: `${result.safetyScore}%` }}
-                  />
+              {/* Flagged Content (if any) */}
+              {result.flaggedContent && (
+                <div>
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Flagged Content</Label>
+                  <div className="mt-2 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-destructive font-medium">
+                      {result.flaggedContent}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Flags */}
               <div>
@@ -480,7 +479,7 @@ export default function Moderation() {
 
               {/* Explanation */}
               <div>
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Analysis Details</Label>
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">AI Analysis</Label>
                 <p className="mt-2 text-sm p-4 rounded-xl bg-primary/5">
                   {result.explanation}
                 </p>

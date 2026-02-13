@@ -38,16 +38,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch and set user profile from API
-  const fetchAndSetUser = useCallback(async (): Promise<boolean> => {
+  const fetchAndSetUser = useCallback(async (): Promise<{success: boolean; status?: number}> => {
     try {
       const profile = await authAPI.getProfile();
       const transformedUser = transformUser(profile);
       setUser(transformedUser);
       localStorage.setItem('auth-user', JSON.stringify(transformedUser));
-      return true;
+      return { success: true };
     } catch (error) {
       console.warn('Failed to fetch user profile:', error);
-      return false;
+      if (error instanceof APIError) {
+        return { success: false, status: error.status };
+      }
+      return { success: false };
     }
   }, []);
 
@@ -65,23 +68,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (token) {
         // Token exists - always try to fetch fresh user data
-        const success = await fetchAndSetUser();
+        const result = await fetchAndSetUser();
         
-        if (!success) {
-          // Token invalid or API unreachable, try cached user as fallback
-          const savedUser = localStorage.getItem('auth-user');
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-              console.log('Using cached user data (API unreachable)');
-            } catch {
-              // Clear invalid cache
-              setAuthToken(null);
-              localStorage.removeItem('auth-user');
-            }
-          } else {
-            // No cache, clear token
+        if (!result.success) {
+          // If specifically 401, the token is invalid - clear it
+          if (result.status === 401) {
+            console.log('Session expired, clearing auth state');
             setAuthToken(null);
+            setUser(null);
+            localStorage.removeItem('auth-user');
+          } else {
+            // Other error (e.g. network), try cached user as fallback
+            const savedUser = localStorage.getItem('auth-user');
+            if (savedUser) {
+              try {
+                setUser(JSON.parse(savedUser));
+                console.log('Using cached user data (API unreachable)');
+              } catch {
+                setAuthToken(null);
+                localStorage.removeItem('auth-user');
+              }
+            }
           }
         }
       } else {
@@ -115,9 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const transformedUser = transformUser(response.user);
       setUser(transformedUser);
       localStorage.setItem('auth-user', JSON.stringify(transformedUser));
-      
-      // Immediately fetch fresh profile to ensure we have latest data
-      await fetchAndSetUser();
+      // No need to fetch profile again - login response already has user data
     } catch (error) {
       if (error instanceof APIError) {
         throw new Error(error.message || 'Invalid email or password');
@@ -136,9 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const transformedUser = transformUser(response.user);
       setUser(transformedUser);
       localStorage.setItem('auth-user', JSON.stringify(transformedUser));
-      
-      // Immediately fetch fresh profile to ensure we have latest data
-      await fetchAndSetUser();
+      // No need to fetch profile again - register response already has user data
     } catch (error) {
       if (error instanceof APIError) {
         throw new Error(error.message || 'Registration failed');

@@ -7,9 +7,10 @@ Handles OAuth connections and publishing for social media platforms:
 - LinkedIn (using official API)
 """
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Query, Form
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from services.social.twitter_service import get_twitter_service
@@ -19,6 +20,82 @@ from services.task_scheduler import get_scheduler_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# ... (Previous code remains)
+
+@router.get("/instagram/callback", response_class=HTMLResponse)
+async def instagram_callback(
+    code: str = Query(...),
+    state: str = Query(None),
+    user_id: int = 1,
+):
+    """Handle Instagram/Facebook OAuth callback."""
+    service = get_instagram_service()
+    
+    result = await service.handle_callback(user_id, code, state)
+    
+    if result.get("success"):
+        scheduler = get_scheduler_service()
+        scheduler.register_social_service("instagram", service)
+        return """
+        <html>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'INSTAGRAM_CONNECTED', success: true }, '*');
+                    window.close();
+                } else {
+                    document.write("Instagram connected! You can close this window.");
+                }
+            </script>
+        </html>
+        """
+    else:
+        return f"""
+        <html>
+            <body>
+                <h1>Connection Failed</h1>
+                <p>{result.get("error", "Unknown error")}</p>
+            </body>
+        </html>
+        """
+
+# ... (Skip ahead to LinkedIn callback)
+
+@router.get("/linkedin/callback", response_class=HTMLResponse)
+async def linkedin_callback(
+    code: str = Query(...),
+    state: str = Query(None),
+    user_id: int = 1,
+):
+    """Handle LinkedIn OAuth callback."""
+    service = get_linkedin_service()
+    
+    result = await service.handle_callback(user_id, code, state)
+    
+    if result.get("success"):
+        scheduler = get_scheduler_service()
+        scheduler.register_social_service("linkedin", service)
+        return """
+        <html>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'LINKEDIN_CONNECTED', success: true }, '*');
+                    window.close();
+                } else {
+                    document.write("LinkedIn connected! You can close this window.");
+                }
+            </script>
+        </html>
+        """
+    else:
+        return f"""
+        <html>
+            <body>
+                <h1>Connection Failed</h1>
+                <p>{result.get("error", "Unknown error")}</p>
+            </body>
+        </html>
+        """
 
 
 # ============================================
@@ -44,6 +121,12 @@ class CredentialsLoginRequest(BaseModel):
     username: str
     email: str
     password: str
+
+
+class CookieConnectRequest(BaseModel):
+    """Request for cookie-based login (Twitter bypass)."""
+    user_id: int
+    cookies: List[Dict[str, Any]] | Dict[str, Any]
 
 
 class PublishRequest(BaseModel):
@@ -78,6 +161,30 @@ async def twitter_status(user_id: int = 1):
         connected=await service.is_authenticated(user_id),
         auth_type="credentials",  # twikit uses username/password
     )
+
+
+@router.post("/twitter/connect-cookies")
+async def twitter_connect_cookies(request: CookieConnectRequest):
+    """
+    Connect Twitter using manual cookies import to bypass Cloudflare/2FA.
+    Paste cookies exported from "EditThisCookie" or similar extension.
+    """
+    service = get_twitter_service()
+    try:
+        await service.connect_with_cookies(
+            user_id=request.user_id,
+            cookies=request.cookies
+        )
+        
+        # Register with scheduler
+        scheduler = get_scheduler_service()
+        scheduler.register_social_service("twitter", service)
+        
+        return {"success": True, "message": "Twitter connected via cookies!"}
+        
+    except Exception as e:
+        logger.error(f"Twitter cookie connect error: {e}")
+        raise HTTPException(status_code=400, detail=f"Failed to connect: {str(e)}")
 
 
 @router.post("/twitter/connect")
@@ -179,23 +286,7 @@ async def instagram_connect(user_id: int = 1, redirect_uri: Optional[str] = None
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/instagram/callback")
-async def instagram_callback(
-    code: str = Query(...),
-    state: str = Query(None),
-    user_id: int = 1,
-):
-    """Handle Instagram/Facebook OAuth callback."""
-    service = get_instagram_service()
-    
-    result = await service.handle_callback(user_id, code, state)
-    
-    if result.get("success"):
-        scheduler = get_scheduler_service()
-        scheduler.register_social_service("instagram", service)
-        return {"message": "Instagram connected successfully", "success": True}
-    else:
-        raise HTTPException(status_code=400, detail=result.get("error", "Connection failed"))
+
 
 
 @router.post("/instagram/publish", response_model=PublishResponse)
@@ -261,23 +352,7 @@ async def linkedin_connect(user_id: int = 1, redirect_uri: Optional[str] = None)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/linkedin/callback")
-async def linkedin_callback(
-    code: str = Query(...),
-    state: str = Query(None),
-    user_id: int = 1,
-):
-    """Handle LinkedIn OAuth callback."""
-    service = get_linkedin_service()
-    
-    result = await service.handle_callback(user_id, code, state)
-    
-    if result.get("success"):
-        scheduler = get_scheduler_service()
-        scheduler.register_social_service("linkedin", service)
-        return {"message": "LinkedIn connected successfully", "success": True}
-    else:
-        raise HTTPException(status_code=400, detail=result.get("error", "Connection failed"))
+
 
 
 @router.post("/linkedin/publish", response_model=PublishResponse)

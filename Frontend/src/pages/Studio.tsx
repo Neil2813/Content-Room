@@ -1,12 +1,14 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Upload, FileText, Image, Music, Video, Wand2, Hash, FileSignature, Loader2, Sparkles, Copy, Check } from 'lucide-react';
-import { creationAPI, APIError } from '@/services/api';
+import { Upload, FileText, Image, Music, Video, Wand2, Hash, FileSignature, Loader2, Sparkles, Copy, Check, Save, ArrowRight, Languages } from 'lucide-react';
+import { creationAPI, contentAPI, translationAPI, APIError } from '@/services/api';
 
 type ContentType = 'text' | 'image' | 'audio' | 'video' | null;
 
@@ -17,6 +19,19 @@ interface GeneratedContent {
   provider?: string;
 }
 
+// Indian languages for translation
+const INDIAN_LANGUAGES = [
+  { code: 'en', name: 'English', native: 'English' },
+  { code: 'hi', name: 'Hindi', native: 'हिंदी' },
+  { code: 'te', name: 'Telugu', native: 'తెలుగు' },
+  { code: 'ta', name: 'Tamil', native: 'தமிழ்' },
+  { code: 'bn', name: 'Bengali', native: 'বাংলা' },
+  { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'ml', name: 'Malayalam', native: 'മലയാളം' },
+  { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ' },
+];
+
 export default function Studio() {
   const [selectedType, setSelectedType] = useState<ContentType>(null);
   const [inputText, setInputText] = useState('');
@@ -26,7 +41,40 @@ export default function Studio() {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [savingToContent, setSavingToContent] = useState(false);
+  const [savedContentId, setSavedContentId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Translation state
+  const [targetLanguage, setTargetLanguage] = useState('hi');
+  const [translatedCaption, setTranslatedCaption] = useState<string | null>(null);
+  const [translatedSummary, setTranslatedSummary] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // Customization state
+  const [targetPlatform, setTargetPlatform] = useState<'twitter' | 'instagram' | 'linkedin' | 'custom'>('twitter');
+  const [captionLength, setCaptionLength] = useState(280);
+  const [hashtagCount, setHashtagCount] = useState(5);
+
+  // Media-only mode state
+  const [mediaOnlyMode, setMediaOnlyMode] = useState(false);
+  const [extractedContent, setExtractedContent] = useState<string | null>(null);
+
+  // Platform presets
+  const platformPresets = {
+    twitter: { length: 280, name: 'Twitter/X' },
+    instagram: { length: 2200, name: 'Instagram' },
+    linkedin: { length: 3000, name: 'LinkedIn' },
+    custom: { length: captionLength, name: 'Custom' },
+  };
+
+  // Update caption length when platform changes
+  const handlePlatformChange = (platform: typeof targetPlatform) => {
+    setTargetPlatform(platform);
+    if (platform !== 'custom') {
+      setCaptionLength(platformPresets[platform].length);
+    }
+  };
 
   const contentTypes = [
     { type: 'text' as const, icon: FileText, label: 'Text', description: 'Articles, posts, captions' },
@@ -39,8 +87,6 @@ export default function Studio() {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      // For non-text content, we could transcribe or describe it first
-      // For now, user can enter description for the content
     }
   };
 
@@ -50,23 +96,28 @@ export default function Studio() {
     setIsProcessing(true);
     setProcessingType(generationType);
     setError(null);
+    setTranslatedCaption(null);
+    setTranslatedSummary(null);
     
     try {
       let result;
       
       switch (generationType) {
-        case 'caption':
-          const captionRes = await creationAPI.generateCaption(inputText, selectedType || 'text');
+        case 'caption': {
+          const captionRes = await creationAPI.generateCaption(inputText, selectedType || 'text', captionLength, targetPlatform);
           result = { caption: captionRes.result, provider: captionRes.provider };
           break;
-        case 'summary':
-          const summaryRes = await creationAPI.generateSummary(inputText);
+        }
+        case 'summary': {
+          const summaryRes = await creationAPI.generateSummary(inputText, 150);
           result = { summary: summaryRes.result, provider: summaryRes.provider };
           break;
-        case 'hashtags':
-          const hashtagsRes = await creationAPI.generateHashtags(inputText, 8);
+        }
+        case 'hashtags': {
+          const hashtagsRes = await creationAPI.generateHashtags(inputText, hashtagCount);
           result = { hashtags: hashtagsRes.hashtags, provider: hashtagsRes.provider };
           break;
+        }
       }
 
       setGeneratedContent((prev) => ({
@@ -92,13 +143,14 @@ export default function Studio() {
     setIsProcessing(true);
     setProcessingType('all');
     setError(null);
+    setTranslatedCaption(null);
+    setTranslatedSummary(null);
     
     try {
-      // Generate all content types in parallel
       const [captionRes, summaryRes, hashtagsRes] = await Promise.all([
-        creationAPI.generateCaption(inputText, selectedType || 'text'),
-        creationAPI.generateSummary(inputText),
-        creationAPI.generateHashtags(inputText, 8),
+        creationAPI.generateCaption(inputText, selectedType || 'text', captionLength, targetPlatform),
+        creationAPI.generateSummary(inputText, 150),
+        creationAPI.generateHashtags(inputText, hashtagCount),
       ]);
 
       setGeneratedContent({
@@ -120,6 +172,86 @@ export default function Studio() {
     }
   };
 
+  const handleAnalyzeMedia = async () => {
+    if (!uploadedFile) {
+      setError('Please upload a media file first');
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingType('media-analysis');
+    setError(null);
+    setExtractedContent(null);
+    setGeneratedContent(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      
+      const response = await fetch('http://localhost:8000/api/v1/create/extract-and-generate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Set extracted content
+      setExtractedContent(data.extracted_content || 'Media analyzed successfully');
+      
+      // Set generated content
+      setGeneratedContent({
+        caption: data.caption,
+        summary: data.summary,
+        hashtags: data.hashtags,
+        provider: data.provider,
+      });
+
+      // Optionally set as input text for further processing
+      if (data.extracted_content) {
+        setInputText(data.extracted_content);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to analyze media');
+      console.error('Media analysis error:', err);
+    } finally {
+      setIsProcessing(false);
+      setProcessingType(null);
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (!generatedContent?.caption && !generatedContent?.summary) return;
+    
+    setIsTranslating(true);
+    setError(null);
+    
+    try {
+      const translations = await Promise.all([
+        generatedContent.caption 
+          ? translationAPI.translate(generatedContent.caption, targetLanguage)
+          : Promise.resolve(null),
+        generatedContent.summary 
+          ? translationAPI.translate(generatedContent.summary, targetLanguage)
+          : Promise.resolve(null),
+      ]);
+      
+      if (translations[0]) setTranslatedCaption(translations[0].translated_text);
+      if (translations[1]) setTranslatedSummary(translations[1].translated_text);
+    } catch (err) {
+      if (err instanceof APIError) {
+        setError(err.message);
+      } else {
+        setError('Failed to translate. Please try again.');
+      }
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleCopy = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -127,16 +259,42 @@ export default function Studio() {
   };
 
   const handleSave = () => {
-    // In production, this would save to the database
     setGeneratedContent(null);
     setInputText('');
     setSelectedType(null);
     setUploadedFile(null);
+    setSavedContentId(null);
+    setTranslatedCaption(null);
+    setTranslatedSummary(null);
+  };
+
+  const handleSaveToMyContent = async () => {
+    if (!inputText.trim() && !generatedContent?.caption && !generatedContent?.summary) return;
+    setSavingToContent(true);
+    setError(null);
+    try {
+      const hashtags = generatedContent?.hashtags;
+      const item = await contentAPI.create({
+        content_type: selectedType || 'text',
+        original_text: inputText.trim() || undefined,
+        caption: generatedContent?.caption,
+        summary: generatedContent?.summary,
+        hashtags: Array.isArray(hashtags) ? hashtags : undefined,
+      });
+      setSavedContentId(item.id);
+    } catch (err) {
+      if (err instanceof APIError) setError(err.message);
+      else setError('Failed to save to My Content');
+    } finally {
+      setSavingToContent(false);
+    }
   };
 
   const handleClear = () => {
     setGeneratedContent(null);
     setError(null);
+    setTranslatedCaption(null);
+    setTranslatedSummary(null);
   };
 
   return (
@@ -145,7 +303,7 @@ export default function Studio() {
         <div>
           <h2 className="text-2xl font-bold mb-2">Creator Studio</h2>
           <p className="text-muted-foreground">
-            Upload content and generate AI-powered captions, summaries, and hashtags.
+            Create, generate, and translate AI-powered content in one place.
           </p>
         </div>
 
@@ -213,6 +371,7 @@ export default function Studio() {
                       selectedType === 'video' ? 'video/*' : '*'
                     }
                     onChange={handleFileUpload}
+                    aria-label={`Upload ${selectedType} file`}
                   />
                   {uploadedFile ? (
                     <>
@@ -234,14 +393,47 @@ export default function Studio() {
                 </div>
               )}
 
+              {/* Media-Only Mode Toggle */}
+              {selectedType !== 'text' && uploadedFile && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">AI Media Analysis Mode</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={mediaOnlyMode}
+                      onChange={(e) => setMediaOnlyMode(e.target.checked)}
+                      aria-label="Toggle AI Media Analysis Mode"
+                      title="Enable media-only analysis without text input"
+                    />
+                    <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  </label>
+                </div>
+              )}
+
+              {/* Extracted Content Display */}
+              {extractedContent && (
+                <div className="space-y-2">
+                  <Label>📸 Extracted from Media</Label>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                    <p className="text-sm whitespace-pre-wrap">{extractedContent}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="content">
-                  {selectedType === 'text' ? 'Content' : 'Description / Context'}
+                  {selectedType === 'text' ? 'Content' : mediaOnlyMode ? 'Additional Context (Optional)' : 'Description / Context'}
                 </Label>
                 <Textarea
                   id="content"
                   placeholder={
-                    selectedType === 'text'
+                    mediaOnlyMode 
+                      ? 'Add extra context or leave empty for AI-only analysis...'
+                      : selectedType === 'text'
                       ? 'Enter your text content here...'
                       : 'Describe your content for better AI generation...'
                   }
@@ -252,33 +444,115 @@ export default function Studio() {
                 />
               </div>
 
+              {/* Customization Controls */}
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <h4 className="text-sm font-medium">Content Customization</h4>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {/* Platform Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="platform">Target Platform</Label>
+                    <Select value={targetPlatform} onValueChange={(value: typeof targetPlatform) => handlePlatformChange(value)}>
+                      <SelectTrigger id="platform">
+                        <SelectValue placeholder="Select platform" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="twitter">🐦 Twitter/X (280)</SelectItem>
+                        <SelectItem value="instagram">📸 Instagram (2200)</SelectItem>
+                        <SelectItem value="linkedin">💼 LinkedIn (3000)</SelectItem>
+                        <SelectItem value="custom">⚙️ Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Caption Length */}
+                  <div className="space-y-2">
+                    <Label htmlFor="caption-length">
+                      Caption Length: {captionLength} chars
+                    </Label>
+                    <input
+                      id="caption-length"
+                      type="range"
+                      min="100"
+                      max="3000"
+                      step="10"
+                      value={captionLength}
+                      onChange={(e) => {
+                        setCaptionLength(parseInt(e.target.value));
+                        setTargetPlatform('custom');
+                      }}
+                      title="Adjust caption length"
+                      aria-label="Caption length slider"
+                      className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+
+                  {/* Hashtag Count */}
+                  <div className="space-y-2">
+                    <Label htmlFor="hashtag-count">
+                      Hashtags: {hashtagCount}
+                    </Label>
+                    <input
+                      id="hashtag-count"
+                      type="range"
+                      min="3"
+                      max="20"
+                      step="1"
+                      value={hashtagCount}
+                      onChange={(e) => setHashtagCount(parseInt(e.target.value))}
+                      title="Adjust hashtag count"
+                      aria-label="Hashtag count slider"
+                      className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Generation Actions */}
               <div className="flex flex-wrap gap-3 pt-4">
-                <Button
-                  variant="hero"
-                  onClick={handleGenerateAll}
-                  disabled={isProcessing || !inputText.trim()}
-                >
-                  {processingType === 'all' ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 mr-2" />
-                  )}
-                  Generate All
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleGenerate('caption')}
-                  disabled={isProcessing || !inputText.trim()}
-                >
-                  {processingType === 'caption' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-                  Caption
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleGenerate('summary')}
-                  disabled={isProcessing || !inputText.trim()}
-                >
+                {/* Media-Only Mode: Analyze Media Button */}
+                {mediaOnlyMode && selectedType !== 'text' && (
+                  <Button
+                    variant="hero"
+                    onClick={handleAnalyzeMedia}
+                    disabled={isProcessing || !uploadedFile}
+                  >
+                    {processingType === 'media-analysis' ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Analyze Media
+                  </Button>
+                )}
+
+                {/* Standard Mode: Generate Buttons */}
+                {!mediaOnlyMode && (
+                  <>
+                    <Button
+                      variant="hero"
+                      onClick={handleGenerateAll}
+                      disabled={isProcessing || !inputText.trim()}
+                    >
+                      {processingType === 'all' ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Generate All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleGenerate('caption')}
+                      disabled={isProcessing || !inputText.trim()}
+                    >
+                      {processingType === 'caption' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                      Caption
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleGenerate('summary')}
+                      disabled={isProcessing || !inputText.trim()}
+                    >
                   {processingType === 'summary' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSignature className="h-4 w-4 mr-2" />}
                   Summary
                 </Button>
@@ -290,6 +564,8 @@ export default function Studio() {
                   {processingType === 'hashtags' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Hash className="h-4 w-4 mr-2" />}
                   Hashtags
                 </Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -303,7 +579,7 @@ export default function Studio() {
                 <div>
                   <CardTitle className="text-lg">Generated Content</CardTitle>
                   <CardDescription>
-                    Review and save your AI-generated content
+                    Review, translate, and save your AI-generated content
                     {generatedContent.provider && (
                       <span className="ml-2 text-xs bg-primary/10 px-2 py-0.5 rounded">
                         via {generatedContent.provider}
@@ -371,9 +647,110 @@ export default function Studio() {
                   </div>
                 </div>
               )}
-              <Button variant="hero" onClick={handleSave}>
-                Save Content
-              </Button>
+
+              {/* Translation Section */}
+              {(generatedContent.caption || generatedContent.summary) && (
+                <div className="p-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Languages className="h-5 w-5 text-primary" />
+                    <Label className="text-sm font-medium">Translate to Indian Languages</Label>
+                  </div>
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INDIAN_LANGUAGES.filter(l => l.code !== 'en').map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code}>
+                            {lang.name} ({lang.native})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={handleTranslate}
+                      disabled={isTranslating}
+                    >
+                      {isTranslating ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Languages className="h-4 w-4 mr-2" />
+                      )}
+                      Translate
+                    </Button>
+                  </div>
+
+                  {/* Translated content */}
+                  {(translatedCaption || translatedSummary) && (
+                    <div className="mt-4 space-y-3">
+                      {translatedCaption && (
+                        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-xs uppercase tracking-wide text-emerald-600">
+                              Translated Caption ({INDIAN_LANGUAGES.find(l => l.code === targetLanguage)?.native})
+                            </Label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity h-7"
+                              onClick={() => handleCopy(translatedCaption, 'translated-caption')}
+                            >
+                              {copiedField === 'translated-caption' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{translatedCaption}</p>
+                        </div>
+                      )}
+                      {translatedSummary && (
+                        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-xs uppercase tracking-wide text-emerald-600">
+                              Translated Summary ({INDIAN_LANGUAGES.find(l => l.code === targetLanguage)?.native})
+                            </Label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity h-7"
+                              onClick={() => handleCopy(translatedSummary, 'translated-summary')}
+                            >
+                              {copiedField === 'translated-summary' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{translatedSummary}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Button variant="hero" onClick={handleSave}>
+                  Save Content
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveToMyContent}
+                  disabled={savingToContent}
+                >
+                  {savingToContent ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save to My Content
+                </Button>
+                {savedContentId != null && (
+                  <Button variant="link" asChild className="text-primary">
+                    <Link to={`/content?contentId=${savedContentId}`}>
+                      View in My Content
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
@@ -390,3 +767,4 @@ export default function Studio() {
     </DashboardLayout>
   );
 }
+

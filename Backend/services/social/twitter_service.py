@@ -46,20 +46,73 @@ class TwitterService(BaseSocialProvider):
         """Check if specific user is logged into Twitter."""
         return await self._ensure_client(user_id)
     
+    async def connect_with_cookies(self, user_id: int, cookies: List[Dict[str, Any]]) -> bool:
+        """Connect using manually provided cookies (bypasses login)."""
+        import json
+        from twikit import Client
+        
+        try:
+            # Validate cookies structure (basic check)
+            if not isinstance(cookies, list):
+                # Try to convert if it's a dict (some extensions export dict)
+                if isinstance(cookies, dict):
+                    cookies = [{"name": k, "value": v} for k, v in cookies.items()]
+                else:
+                    raise ValueError("Cookies must be a JSON list or dictionary")
+
+            # Save to file
+            cookies_path = self.cookies_dir / f"twitter_{user_id}.json"
+            with open(cookies_path, 'w') as f:
+                json.dump(cookies, f)
+            
+            # Verify by loading
+            client = Client('en-US')
+            client._user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+            
+            client.load_cookies(str(cookies_path))
+            
+            # Test connection (optional, get user info)
+            # await client.user() 
+            
+            self._sessions[user_id] = {
+                'client': client,
+                'logged_in': True,
+                'username': 'Cookie User' # We might update this later
+            }
+            logger.info(f"Twitter: User {user_id} connected via manual cookies")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Twitter cookie import failed: {e}")
+            # Clean up bad file
+            if 'cookies_path' in locals() and cookies_path.exists():
+                cookies_path.unlink()
+            raise e
+
     async def connect(self, user_id: int, username: str, email: str, password: str) -> bool:
         """Connect a user using credentials."""
         from twikit import Client
         
         try:
             client = Client('en-US')
-            client._user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            # Use a modern, realistic User-Agent to avoid Cloudflare blocks (Chrome 132)
+            client._user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
             
             # Login
-            await client.login(
-                auth_info_1=username,
-                auth_info_2=email,
-                password=password
-            )
+            try:
+                await client.login(
+                    auth_info_1=username,
+                    auth_info_2=email,
+                    password=password
+                )
+            except Exception as login_err:
+                logger.error(f"Twitter login error: {login_err}")
+                if "403" in str(login_err) or "Cloudflare" in str(login_err):
+                    raise ValueError(
+                        "Twitter blocked the login (Cloudflare 403). "
+                        "Please use the 'Manual Cookie Import' option."
+                    )
+                raise login_err
             
             # Save cookies
             cookies_path = self.cookies_dir / f"twitter_{user_id}.json"

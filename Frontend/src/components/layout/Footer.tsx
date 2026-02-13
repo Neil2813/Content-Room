@@ -8,9 +8,9 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">CF</span>
+                <span className="text-primary-foreground font-bold text-sm">CR</span>
               </div>
-              <span className="font-semibold text-lg">ContentFlow</span>
+              <span className="font-semibold text-lg">Content Room</span>
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered content creation, moderation, and scheduling for modern teams.
@@ -47,7 +47,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-primary/10">
           <p className="text-sm text-muted-foreground text-center">
-            © {new Date().getFullYear()} ContentFlow. All rights reserved.
+            © {new Date().getFullYear()} Content Room. All rights reserved.
           </p>
         </div>
       </div>

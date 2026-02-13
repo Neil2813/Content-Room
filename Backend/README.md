@@ -1,4 +1,4 @@
-# ContentOS Backend
+# Content Room Backend
 
 **AWS-native AI Content Workflow Engine** with resilient fallback architecture.
 
@@ -147,7 +147,7 @@ GEMINI_API_KEY=        # https://makersuite.google.com/app/apikey
 OLLAMA_BASE_URL=http://localhost:11434
 
 # Database
-DATABASE_URL=sqlite+aiosqlite:///./contentos.db
+DATABASE_URL=sqlite+aiosqlite:///./content_room.db
 
 # Security
 SECRET_KEY=your-secret-key

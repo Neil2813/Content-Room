@@ -1,7 +1,7 @@
 """
 Analytics Router for ContentOS
 
-Handles performance metrics - NO AUTH REQUIRED.
+Handles performance metrics - AUTH OPTIONAL (uses authenticated user when available).
 """
 import logging
 from datetime import datetime, timedelta
@@ -15,6 +15,8 @@ from sqlalchemy import select, func
 from database import get_db
 from models.content import Content, ModerationStatus
 from models.schedule import ScheduledPost, ScheduleStatus
+from models.user import User
+from routers.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -42,26 +44,27 @@ class ModerationStats(BaseModel):
 
 @router.get("/dashboard", response_model=DashboardMetrics)
 async def get_dashboard_metrics(
-    user_id: int = 1,
     platform: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get dashboard overview metrics.
-    NO AUTHENTICATION REQUIRED.
+    Uses authenticated user's ID.
     """
+    effective_user_id = current_user.id
     week_ago = datetime.utcnow() - timedelta(days=7)
     
     # Total content
     total_result = await db.execute(
-        select(func.count(Content.id)).where(Content.user_id == user_id)
+        select(func.count(Content.id)).where(Content.user_id == effective_user_id)
     )
     total_content = total_result.scalar() or 0
     
     # Content this week
     week_result = await db.execute(
         select(func.count(Content.id)).where(
-            Content.user_id == user_id,
+            Content.user_id == effective_user_id,
             Content.created_at >= week_ago,
         )
     )
@@ -70,7 +73,7 @@ async def get_dashboard_metrics(
     # Moderation stats
     safe_result = await db.execute(
         select(func.count(Content.id)).where(
-            Content.user_id == user_id,
+            Content.user_id == effective_user_id,
             Content.moderation_status == ModerationStatus.SAFE.value,
         )
     )
@@ -78,7 +81,7 @@ async def get_dashboard_metrics(
     
     flagged_result = await db.execute(
         select(func.count(Content.id)).where(
-            Content.user_id == user_id,
+            Content.user_id == effective_user_id,
             Content.moderation_status.in_([
                 ModerationStatus.WARNING.value,
                 ModerationStatus.UNSAFE.value,
@@ -89,7 +92,7 @@ async def get_dashboard_metrics(
     
     # Scheduled posts
     scheduled_query = select(func.count(ScheduledPost.id)).where(
-            ScheduledPost.user_id == user_id,
+            ScheduledPost.user_id == effective_user_id,
             ScheduledPost.status == ScheduleStatus.QUEUED.value,
         )
     if platform:
@@ -100,7 +103,7 @@ async def get_dashboard_metrics(
     
     # Published posts
     published_query = select(func.count(ScheduledPost.id)).where(
-            ScheduledPost.user_id == user_id,
+            ScheduledPost.user_id == effective_user_id,
             ScheduledPost.status == ScheduleStatus.PUBLISHED.value,
         )
     if platform:
@@ -121,20 +124,22 @@ async def get_dashboard_metrics(
 
 @router.get("/moderation", response_model=ModerationStats)
 async def get_moderation_stats(
-    user_id: int = 1,
     platform: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get moderation statistics.
-    NO AUTHENTICATION REQUIRED.
+    Uses authenticated user's ID.
     """
+    effective_user_id = current_user.id
+    
     # Count by status
     status_counts = {}
     for status in ModerationStatus:
         result = await db.execute(
             select(func.count(Content.id)).where(
-                Content.user_id == user_id,
+                Content.user_id == effective_user_id,
                 Content.moderation_status == status.value,
             )
         )
@@ -143,7 +148,7 @@ async def get_moderation_stats(
     # Average safety score
     avg_result = await db.execute(
         select(func.avg(Content.safety_score)).where(
-            Content.user_id == user_id,
+            Content.user_id == effective_user_id,
             Content.safety_score.isnot(None),
         )
     )

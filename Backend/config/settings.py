@@ -1,5 +1,5 @@
 """
-ContentOS Backend Configuration
+Content Room Backend Configuration
 
 AWS-first configuration with automatic fallback to free alternatives.
 Follows 12-factor app principles for environment-based configuration.
@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     # Database
     # ===========================================
     database_url: str = Field(
-        default="sqlite+aiosqlite:///./contentos.db",
+        default="sqlite+aiosqlite:///./content_room.db",
         alias="DATABASE_URL"
     )
     
@@ -104,7 +104,7 @@ class Settings(BaseSettings):
     # Security
     # ===========================================
     secret_key: str = Field(
-        default="contentos-dev-secret-key-change-in-production",
+        default="content-room-dev-secret-key-change-in-production",
         alias="SECRET_KEY"
     )
     algorithm: str = Field(default="HS256", alias="ALGORITHM")

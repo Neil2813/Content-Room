@@ -19,6 +19,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.moderation_service import get_moderation_service
 from database import get_db
 from models.content import Content, ModerationStatus
+from models.user import User
+from routers.auth import get_current_user_optional
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -36,20 +38,19 @@ class TextModerationRequest(BaseModel):
 class ModerationResponse(BaseModel):
     """Standard moderation response."""
     decision: str
-    safety_score: float
-    confidence: float
-    explanation: str
+    explanation: str  # LLM-generated explanation of what and why is flagged
+    flagged_content: str  # Summary of problematic content
     flags: list
     provider: str
     processing_time_ms: int
 
 
-def get_moderation_status(decision: str, safety_score: float) -> str:
+def get_moderation_status(decision: str) -> str:
     """Convert moderation decision to ModerationStatus enum value."""
     if decision == "ESCALATE":
         return ModerationStatus.ESCALATED.value
-    elif decision == "FLAG" or safety_score < 70:
-        return ModerationStatus.WARNING.value if safety_score >= 40 else ModerationStatus.UNSAFE.value
+    elif decision == "FLAG":
+        return ModerationStatus.UNSAFE.value
     return ModerationStatus.SAFE.value
 
 
@@ -57,6 +58,7 @@ def get_moderation_status(decision: str, safety_score: float) -> str:
 async def moderate_text(
     request: TextModerationRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """
     Moderate text content for safety.
@@ -67,15 +69,15 @@ async def moderate_text(
     try:
         result = await moderation.moderate_text(request.text)
         
-        # Save to database for analytics (user_id=1 for demo)
+        # Save to database for analytics (uses authenticated user if available)
         if request.save_to_db:
             try:
                 content = Content(
-                    user_id=1,
+                    user_id=current_user.id if current_user else 1,
                     content_type="text",
                     original_text=request.text[:500],  # Truncate for storage
-                    moderation_status=get_moderation_status(result["decision"], result["safety_score"]),
-                    safety_score=result["safety_score"],
+                    moderation_status=get_moderation_status(result["decision"]),
+                    safety_score=result.get("safety_score", 100),  # Keep for analytics
                     moderation_flags=result.get("flags", []),
                 )
                 db.add(content)
@@ -86,9 +88,8 @@ async def moderate_text(
         
         return ModerationResponse(
             decision=result["decision"],
-            safety_score=result["safety_score"],
-            confidence=result.get("confidence", 0.8),
-            explanation=result.get("explanation", ""),
+            explanation=result.get("explanation", "No issues detected."),
+            flagged_content=result.get("flagged_content", ""),
             flags=result.get("flags", []),
             provider=result.get("provider", "unknown"),
             processing_time_ms=result.get("processing_time_ms", 0),
@@ -102,6 +103,7 @@ async def moderate_text(
 async def moderate_image(
     image: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """
     Moderate image content for safety.
@@ -116,11 +118,11 @@ async def moderate_image(
         # Save to database for analytics
         try:
             content = Content(
-                user_id=1,
+                user_id=current_user.id if current_user else 1,
                 content_type="image",
                 original_text=f"Image: {image.filename}",
-                moderation_status=get_moderation_status(result["decision"], result["safety_score"]),
-                safety_score=result["safety_score"],
+                moderation_status=get_moderation_status(result["decision"]),
+                safety_score=result.get("safety_score", 100),
                 moderation_flags=result.get("flags", []),
             )
             db.add(content)
@@ -142,6 +144,7 @@ async def moderate_image(
 async def moderate_audio(
     audio: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """
     Moderate audio content for safety.
@@ -156,11 +159,11 @@ async def moderate_audio(
         # Save to database for analytics
         try:
             content = Content(
-                user_id=1,
+                user_id=current_user.id if current_user else 1,
                 content_type="audio",
                 original_text=f"Audio: {audio.filename}",
-                moderation_status=get_moderation_status(result["decision"], result["safety_score"]),
-                safety_score=result["safety_score"],
+                moderation_status=get_moderation_status(result["decision"]),
+                safety_score=result.get("safety_score", 100),
                 moderation_flags=result.get("flags", []),
             )
             db.add(content)
@@ -182,6 +185,7 @@ async def moderate_audio(
 async def moderate_video(
     video: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """
     Moderate video content for safety.
@@ -269,10 +273,10 @@ async def moderate_video(
             # Save to database for analytics
             try:
                 content = Content(
-                    user_id=1,
+                    user_id=current_user.id if current_user else 1,
                     content_type="video",
                     original_text=f"Video: {video.filename}",
-                    moderation_status=get_moderation_status(decision, min_safety),
+                    moderation_status=get_moderation_status(decision),
                     safety_score=min_safety,
                     moderation_flags=list(set(all_flags)),
                 )

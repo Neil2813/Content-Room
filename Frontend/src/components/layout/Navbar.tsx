@@ -14,9 +14,9 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">CF</span>
+              <span className="text-primary-foreground font-bold text-sm">CR</span>
             </div>
-            <span className="font-semibold text-lg">ContentFlow</span>
+            <span className="font-semibold text-lg">Content Room</span>
           </Link>
 
           {/* Desktop Navigation */}

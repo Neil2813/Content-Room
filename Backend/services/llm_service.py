@@ -140,7 +140,7 @@ class GrokProvider(BaseLLMProvider):
             raise ProviderUnavailableError("Groq API key not configured")
         
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
                     headers={
@@ -254,7 +254,7 @@ class SimpleTemplateProvider(BaseLLMProvider):
         "🌸 In a world of chaos, find your peace... {content} � Tag someone who needs to see this beauty 💕 #VibezOnly #BeautifulMoments #Aesthetic",
         "� Stop scrolling, you need to see this! {content} ✨ Double tap if this hits different � #InstaVibes #ContentCreator #Viral",
         "� Life is all about these little wonders... {content} 🌿 What's your favorite way to appreciate beauty? 💭 #SlowLiving #Mindful #NatureLovers",
-        "⭐ Some things just speak to the soul... {content} 🎨 Save this for when you need a reminder ❤️ #DailyInspiration #AestheticFeed #ContentOS",
+        "⭐ Some things just speak to the soul... {content} 🎨 Save this for when you need a reminder ❤️ #DailyInspiration #AestheticFeed #ContentRoom",
     ]
     
     SUMMARY_TEMPLATES = [
@@ -264,7 +264,7 @@ class SimpleTemplateProvider(BaseLLMProvider):
     ]
     
     HASHTAGS = [
-        "#ContentOS", "#AI", "#ContentCreation", "#Digital", "#Tech",
+        "#ContentRoom", "#AI", "#ContentCreation", "#Digital", "#Tech",
         "#Innovation", "#Creative", "#Trending", "#Viral", "#Social",
         "#Marketing", "#Growth", "#Engagement", "#Strategy", "#Success",
     ]
@@ -279,8 +279,27 @@ class SimpleTemplateProvider(BaseLLMProvider):
         if "caption" in prompt_lower:
             # Extract content from prompt
             content = self._extract_content(prompt)
+            
+            # Determine target length from max_tokens kwarg
+            max_tokens = kwargs.get("max_tokens", 256)
+            target_chars = max_tokens * 3  # rough estimate
+            
             template = random.choice(self.CAPTION_TEMPLATES)
-            return template.format(content=content[:100])
+            base_caption = template.format(content=content[:200])
+            
+            # If target is much larger than template, expand with more content
+            if target_chars > 500 and len(base_caption) < target_chars:
+                extras = [
+                    "\n\nThis is one of those moments that truly stays with you. The kind of experience that makes you pause and appreciate what life has to offer.",
+                    "\n\nThere's depth and beauty here that words can barely capture. Every detail tells its own story, and together they create something unforgettable.",
+                    "\n\nWhat stands out most is how every element comes together so perfectly. It's the little things that make the biggest impact.",
+                    "\n\nIf this resonated with you, share your own experience in the comments. Let's build a community of people who appreciate the extraordinary in the ordinary.",
+                    "\n\nRemember: every great story starts with a moment just like this one. Don't let these moments pass you by without soaking them in.",
+                ]
+                while len(base_caption) < target_chars and extras:
+                    base_caption += extras.pop(0)
+            
+            return base_caption[:target_chars] if target_chars < len(base_caption) else base_caption
         
         elif "summary" in prompt_lower or "summarize" in prompt_lower:
             content = self._extract_content(prompt)
@@ -403,29 +422,97 @@ class LLMService:
         logger.error(f"All LLM providers failed: {error_msg}")
         raise AllProvidersFailedError(f"All providers failed: {error_msg}")
     
-    async def generate_caption(self, content: str, content_type: str = "text") -> Dict[str, Any]:
-        """Generate an aesthetic, engaging caption for content."""
-        prompt = f"""You are a creative social media copywriter known for aesthetic, viral captions.
+    async def generate_caption(
+        self, 
+        content: str, 
+        content_type: str = "text",
+        max_length: int = 280,
+        platform: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Generate a platform-optimized caption for content.
+        
+        Args:
+            content: The content to generate a caption for
+            content_type: Type of content (text, image, audio, video)
+            max_length: Maximum caption length in characters (up to 3000)
+            platform: Target platform (twitter, instagram, linkedin, custom)
+        """
+        # Clamp max_length to sensible bounds
+        max_length = max(50, min(max_length, 3000))
+        
+        # Calculate appropriate max_tokens based on requested character length
+        # Roughly 1 token ≈ 3-4 characters; add generous padding
+        estimated_tokens = max(256, int(max_length / 2.5) + 100)
+        
+        # Platform-specific tone customization
+        if platform == "linkedin":
+            tone_instructions = """- Tone: Professional, thought-leadership, industry-focused
+- Style: Start with an insight or professional perspective
+- Language: Clear, authoritative, and value-driven
+- Emojis: Minimal (1-2 professional emojis like 💼 📊 🚀)
+- Hashtags: Industry-relevant and professional (#Leadership #Innovation #Business)
+- Call-to-action: Invite professional discussion or connection"""
+        elif platform == "twitter" or platform == "x":
+            tone_instructions = """- Tone: Knowledgeable, Reserved, and Insightful
+- Style: Concise, intelligent, and thought-provoking
+- Language: Sharp, clear, intellectual without being pretentious
+- Emojis: Very minimal (0-1 thoughtful emoji)
+- Hashtags: Trending topics and knowledge-based tags
+- Call-to-action: Spark intelligent conversation or retweets"""
+        elif platform == "instagram":
+            tone_instructions = """- Tone: Aesthetic, Dreamy, and Visually Evocative
+- Style: Start with a mood-setting line or poetic phrase
+- Language: Emotional, relatable, and visually descriptive
+- Emojis: 3-5 aesthetic emojis spread throughout (✨ 🌸 💫 🌙 🦋)
+- Hashtags: Aesthetic and lifestyle tags (#AestheticVibes #InstaDaily #VisualMoodboard)
+- Call-to-action: Engage emotions, tag friends, save for later"""
+        else:
+            # Default/Custom: balanced aesthetic approach
+            tone_instructions = """- Tone: Engaging and relatable
+- Style: Mix of aesthetic and informative
+- Emojis: 2-4 relevant emojis
+- Hashtags: Mix of trending and niche tags
+- Call-to-action: Encourage engagement"""
+        
+        # Adjust length guidance based on the requested size
+        if max_length >= 1500:
+            length_guidance = f"""- You MUST write a LONG, detailed caption that is close to {max_length} characters.
+- Write multiple paragraphs with rich detail, storytelling, and emotional depth.
+- Include line breaks between paragraphs for readability.
+- Aim for AT LEAST {int(max_length * 0.7)} characters. Going under {int(max_length * 0.5)} characters is UNACCEPTABLE."""
+        elif max_length >= 500:
+            length_guidance = f"""- Write a medium-length caption of approximately {max_length} characters.
+- Include 2-3 paragraphs with good detail and engagement hooks.
+- Aim for AT LEAST {int(max_length * 0.6)} characters."""
+        else:
+            length_guidance = f"""- Keep total length under {max_length} characters.
+- Be concise but impactful."""
+        
+        prompt = f"""You are an expert social media copywriter creating a caption for {platform or 'social media'}.
 
-Create an AESTHETIC and ENGAGING caption for this {content_type} content.
+Create a compelling caption for this {content_type} content.
 
 Requirements:
-- Length: 150-300 characters (not too short!)
-- Start with a mood-setting line or poetic phrase
-- Include 3-5 relevant emojis spread throughout (not all at the end)
-- Add a thought-provoking question or call-to-action
-- End with 3-5 trending hashtags
-- Tone: Dreamy, aesthetic, and relatable
+- Target length: {max_length} characters
+{length_guidance}
+{tone_instructions}
 
 Content: {content}
 
 Write the caption now (no explanations, just the caption):"""
-        return await self.generate(prompt, task="caption")
+        return await self.generate(prompt, task="caption", max_tokens=estimated_tokens)
     
-    async def generate_summary(self, content: str) -> Dict[str, Any]:
-        """Generate a summary of content."""
-        prompt = f"""Summarize the following content in 2-3 concise sentences.
+    async def generate_summary(self, content: str, max_length: int = 150) -> Dict[str, Any]:
+        """Generate a summary of content.
+        
+        Args:
+            content: The content to summarize
+            max_length: Maximum summary length in characters
+        """
+        prompt = f"""Summarize the following content concisely.
 Focus on the key points and main message.
+
+IMPORTANT: Keep the summary under {max_length} characters.
 
 Content: {content}
 

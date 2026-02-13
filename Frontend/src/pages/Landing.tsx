@@ -2,48 +2,28 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { FeatureCard } from '@/components/shared/FeatureCard';
+import DisplayCards from "@/components/ui/display-cards";
 import { StepCard } from '@/components/shared/StepCard';
-import { Wand2, Shield, Calendar, Globe, ArrowRight } from 'lucide-react';
+import { Wand2, Shield, ArrowRight, Monitor, Database, Globe, Layers } from 'lucide-react';
+import DatabaseWithRestApi from '@/components/ui/database-with-rest-api';
 
-const features = [
-  {
-    icon: <Wand2 className="h-6 w-6" />,
-    title: 'AI Content Creation',
-    description: 'Generate captions, summaries, and hashtags with advanced AI. Transform your content workflow.',
-  },
-  {
-    icon: <Shield className="h-6 w-6" />,
-    title: 'Smart Moderation',
-    description: 'Automated content safety analysis with detailed scoring and flag detection.',
-  },
-  {
-    icon: <Calendar className="h-6 w-6" />,
-    title: 'Intelligent Scheduling',
-    description: 'Plan and schedule your content across platforms with an intuitive calendar interface.',
-  },
-  {
-    icon: <Globe className="h-6 w-6" />,
-    title: 'Multilingual Support',
-    description: 'Create and manage content in multiple Indian languages with native font support.',
-  },
-];
+
 
 const steps = [
   {
     number: 1,
-    title: 'Upload Your Content',
-    description: 'Import text, images, audio, or video files to the platform.',
+    title: 'Draft & Enhance',
+    description: 'Input your idea. Our AI Studio generates captions, hashtags, and summaries instantly.',
   },
   {
     number: 2,
-    title: 'AI Processes & Enhances',
-    description: 'Our AI generates captions, moderates content, and prepares optimized outputs.',
+    title: 'Deep Moderation',
+    description: 'Local AI models (NudeNet + CLIP) analyze content for safety and compliance locally.',
   },
   {
     number: 3,
-    title: 'Schedule & Publish',
-    description: 'Set your publishing schedule and let ContentFlow handle the rest.',
+    title: 'Localize & Schedule',
+    description: 'Translate to 8+ Indian languages and schedule for Twitter, LinkedIn, & Instagram.',
   },
 ];
 
@@ -90,15 +70,38 @@ export default function Landing() {
                 A complete suite of AI-powered tools to transform how your team creates and manages content.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
-                <FeatureCard
-                  key={index}
-                  icon={feature.icon}
-                  title={feature.title}
-                  description={feature.description}
-                />
-              ))}
+            <div className="flex min-h-[400px] w-full items-center justify-center py-10">
+              <div className="w-full max-w-3xl">
+                <DisplayCards cards={[
+                  {
+                    icon: <Wand2 className="size-5 text-blue-300" />,
+                    title: "AI Creation",
+                    description: "Generate captions & summaries",
+                    date: "Instant",
+                    iconClassName: "text-blue-500",
+                    titleClassName: "text-blue-500",
+                    className: "[grid-area:stack] hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
+                  },
+                  {
+                    icon: <Shield className="size-5 text-blue-300" />,
+                    title: "Smart Moderation",
+                    description: "Automated safety analysis",
+                    date: "Real-time",
+                    iconClassName: "text-blue-500",
+                    titleClassName: "text-blue-500",
+                    className: "[grid-area:stack] translate-x-12 translate-y-10 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
+                  },
+                  {
+                    icon: <Monitor className="size-5 text-amber-400" />,
+                    title: "Official Webapp",
+                    description: "The premium choice for you",
+                    date: "Featured",
+                    iconClassName: "text-amber-500",
+                    titleClassName: "text-amber-500",
+                    className: "[grid-area:stack] translate-x-24 translate-y-20 hover:translate-y-10",
+                  },
+                ]} />
+              </div>
             </div>
           </div>
         </section>
@@ -108,10 +111,10 @@ export default function Landing() {
           <div className="container-wide">
             <div className="text-center mb-16">
               <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                How It Works
+                Workflow
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Get started in minutes with our simple three-step process.
+                From idea to publishing, streamlined instructions.
               </p>
             </div>
             <div className="max-w-2xl mx-auto space-y-8">
@@ -127,7 +130,61 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Screenshot Placeholder Section */}
+        {/* Powered by Technology Section */}
+        <section className="py-20 border-t border-primary/10">
+          <div className="container-wide">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+                  Intelligent Architecture
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8">
+                  Built with a powerful ensemble of AI models and a robust backend to ensure seamless data exchange and processing.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary mt-1">
+                      <Database className="size-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Secure Data Flow</h3>
+                      <p className="text-muted-foreground">Encrypted REST APIs handling your content securely.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                     <div className="p-2 rounded-lg bg-primary/10 text-primary mt-1">
+                      <Globe className="size-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Local Intelligence</h3>
+                      <p className="text-muted-foreground">Offline-first moderation and translation engines.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="p-6 rounded-2xl bg-muted/30 border border-primary/10 w-full flex justify-center">
+                  <DatabaseWithRestApi 
+                    title="ContentOS Engine"
+                    circleText="API"
+                    badgeTexts={{
+                      first: "Studio",
+                      second: "Safety",
+                      third: "Lang",
+                      fourth: "Social"
+                    }}
+                    buttonTexts={{
+                      first: "FastAPI",
+                      second: "React"
+                    }}
+                  />
+                </div>
+              </div>
+             </div>
+          </div>
+        </section>
+
+        {/* Dashboard Preview Section */}
         <section className="py-20 border-t border-primary/10">
           <div className="container-wide">
             <div className="text-center mb-12">
@@ -159,7 +216,7 @@ export default function Landing() {
                 Ready to Transform Your Content Workflow?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Join teams who are already using ContentFlow to streamline their content operations.
+                Join teams who are already using Content Room to streamline their content operations.
               </p>
               <Button asChild variant="hero" size="xl">
                 <Link to="/register">

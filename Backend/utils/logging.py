@@ -1,5 +1,5 @@
 """
-Logging Configuration for ContentOS Backend
+Logging Configuration for Content Room Backend
 
 Provides structured JSON logging for production and
 readable console logging for development.
@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 
-class ContentOSFormatter(logging.Formatter):
+class ContentRoomFormatter(logging.Formatter):
     """
     Custom formatter with color support for console output.
     Uses structured format for easy parsing.
@@ -47,7 +47,7 @@ def setup_logging(level: str = "INFO") -> None:
     numeric_level = getattr(logging, level.upper(), logging.INFO)
     
     # Create formatter
-    formatter = ContentOSFormatter(
+    formatter = ContentRoomFormatter(
         fmt="%(timestamp)s | %(level_colored)s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

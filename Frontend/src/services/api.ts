@@ -1,8 +1,8 @@
 /**
- * ContentOS API Client
- * 
+ * Content Room API Client
+ *
  * Centralized API client for all backend interactions.
- * Provides typed interfaces and error handling for the ContentOS backend.
+ * Provides typed interfaces and error handling for the Content Room backend.
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -32,6 +32,14 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
+}
+
+export interface CookieData {
+  name: string;
+  value: string;
+  domain?: string;
+  path?: string;
+  [key: string]: unknown;
 }
 
 // Creation Types
@@ -87,6 +95,35 @@ export interface MultimodalModerationResponse {
   };
 }
 
+// Content (My Content pipeline) Types
+export interface ContentItem {
+  id: number;
+  content_type: string;
+  original_text?: string;
+  caption?: string;
+  summary?: string;
+  hashtags?: { items?: string[] } | string[];
+  translated_text?: string;
+  source_language?: string;
+  target_language?: string;
+  moderation_status: string;
+  safety_score?: number;
+  moderation_explanation?: string;
+  workflow_status: 'draft' | 'moderated' | 'translated' | 'scheduled';
+  is_scheduled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentCreate {
+  content_type?: string;
+  original_text?: string;
+  caption?: string;
+  summary?: string;
+  hashtags?: string[];
+  file_path?: string;
+}
+
 // Scheduler Types
 export interface ScheduleRequest {
   title: string;
@@ -94,6 +131,7 @@ export interface ScheduleRequest {
   scheduled_at: string;
   platform?: string;
   user_id?: number;
+  content_id?: number;
   media_url?: string;
   skip_moderation?: boolean;
 }
@@ -264,29 +302,34 @@ export const authAPI = {
 // ============================================
 
 export const creationAPI = {
-  async generateCaption(content: string, contentType = 'text'): Promise<GenerateResponse> {
+  async generateCaption(content: string, contentType = 'text', maxLength?: number, platform?: string): Promise<GenerateResponse> {
     const response = await fetch(`${API_V1}/create/caption`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, content_type: contentType }),
+      body: JSON.stringify({ 
+        content, 
+        content_type: contentType,
+        max_length: maxLength,
+        platform: platform
+      }),
     });
     return handleResponse<GenerateResponse>(response);
   },
 
-  async generateSummary(content: string): Promise<GenerateResponse> {
+  async generateSummary(content: string, maxLength?: number): Promise<GenerateResponse> {
     const response = await fetch(`${API_V1}/create/summary`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, max_length: maxLength }),
     });
     return handleResponse<GenerateResponse>(response);
   },
 
   async generateHashtags(content: string, count = 5): Promise<HashtagsResponse> {
-    const response = await fetch(`${API_V1}/create/hashtags?count=${count}`, {
+    const response = await fetch(`${API_V1}/create/hashtags`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, count }),
     });
     return handleResponse<HashtagsResponse>(response);
   },
@@ -312,7 +355,7 @@ export const moderationAPI = {
   async moderateText(text: string, language = 'en'): Promise<ModerationResponse> {
     const response = await fetch(`${API_V1}/moderate/text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ text, language }),
     });
     return handleResponse<ModerationResponse>(response);
@@ -324,6 +367,7 @@ export const moderationAPI = {
 
     const response = await fetch(`${API_V1}/moderate/image`, {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData,
     });
     return handleResponse(response);
@@ -335,6 +379,7 @@ export const moderationAPI = {
 
     const response = await fetch(`${API_V1}/moderate/audio`, {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData,
     });
     return handleResponse(response);
@@ -350,6 +395,7 @@ export const moderationAPI = {
 
     const response = await fetch(`${API_V1}/moderate/video`, {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData,
     });
     return handleResponse(response);
@@ -367,9 +413,40 @@ export const moderationAPI = {
 
     const response = await fetch(`${API_V1}/moderate/multimodal`, {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData,
     });
     return handleResponse<MultimodalModerationResponse>(response);
+  },
+};
+
+// ============================================
+// Content API (My Content pipeline)
+// ============================================
+
+export const contentAPI = {
+  async list(statusFilter?: string): Promise<ContentItem[]> {
+    const params = statusFilter ? `?status_filter=${statusFilter}` : '';
+    const response = await fetch(`${API_V1}/content${params}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<ContentItem[]>(response);
+  },
+
+  async get(id: number): Promise<ContentItem> {
+    const response = await fetch(`${API_V1}/content/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<ContentItem>(response);
+  },
+
+  async create(data: ContentCreate): Promise<ContentItem> {
+    const response = await fetch(`${API_V1}/content/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<ContentItem>(response);
   },
 };
 
@@ -381,7 +458,7 @@ export const schedulerAPI = {
   async createPost(data: ScheduleRequest): Promise<ScheduledPost> {
     const response = await fetch(`${API_V1}/schedule/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(data),
     });
     return handleResponse<ScheduledPost>(response);
@@ -413,7 +490,9 @@ export const schedulerAPI = {
     if (status) params.append('status', status);
     if (platform) params.append('platform', platform);
 
-    const response = await fetch(`${API_V1}/schedule/?${params}`);
+    const response = await fetch(`${API_V1}/schedule/?${params}`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<ScheduledPost[]>(response);
   },
 
@@ -453,26 +532,38 @@ export const schedulerAPI = {
 // ============================================
 
 export const analyticsAPI = {
-  async getDashboard(userId = 1, platform?: string): Promise<DashboardMetrics> {
-    let url = `${API_V1}/analytics/dashboard?user_id=${userId}`;
+  async getDashboard(userId?: number, platform?: string): Promise<DashboardMetrics> {
+    let url = `${API_V1}/analytics/dashboard`;
+    const params = new URLSearchParams();
     if (platform && platform !== 'all') {
-      url += `&platform=${platform}`;
+      params.append('platform', platform);
     }
-    const response = await fetch(url);
+    const paramStr = params.toString();
+    if (paramStr) url += `?${paramStr}`;
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<DashboardMetrics>(response);
   },
 
-  async getModerationStats(userId = 1, platform?: string): Promise<ModerationStats> {
-    let url = `${API_V1}/analytics/moderation?user_id=${userId}`;
+  async getModerationStats(userId?: number, platform?: string): Promise<ModerationStats> {
+    let url = `${API_V1}/analytics/moderation`;
+    const params = new URLSearchParams();
     if (platform && platform !== 'all') {
-      url += `&platform=${platform}`;
+      params.append('platform', platform);
     }
-    const response = await fetch(url);
+    const paramStr = params.toString();
+    if (paramStr) url += `?${paramStr}`;
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<ModerationStats>(response);
   },
 
   async getProviderStats(): Promise<ProviderStats> {
-    const response = await fetch(`${API_V1}/analytics/providers`);
+    const response = await fetch(`${API_V1}/analytics/providers`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<ProviderStats>(response);
   },
 };
@@ -574,6 +665,15 @@ export const socialConnectAPI = {
       return handleResponse(response);
     },
 
+    async connectCookies(cookies: CookieData[], userId = 1): Promise<{ success: boolean; message: string }> {
+      const response = await fetch(`${API_V1}/social/twitter/connect-cookies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookies, user_id: userId }),
+      });
+      return handleResponse(response);
+    },
+
     async disconnect(userId = 1): Promise<{ success: boolean }> {
       const response = await fetch(`${API_V1}/social/twitter/disconnect?user_id=${userId}`, {
         method: 'DELETE',
@@ -657,6 +757,67 @@ export const socialConnectAPI = {
 };
 
 // ============================================
+// History API
+// ============================================
+
+export interface HistoryItem {
+  id: number;
+  item_type: 'content' | 'scheduled';
+  title: string;
+  description?: string;
+  status: string;
+  platform?: string;
+  safety_score?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface HistoryResponse {
+  items: HistoryItem[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface HistoryStats {
+  total_content: number;
+  total_scheduled: number;
+  published_count: number;
+  moderated_count: number;
+  this_week_content: number;
+  this_week_scheduled: number;
+}
+
+export const historyAPI = {
+  async getHistory(
+    itemType?: 'content' | 'scheduled',
+    timeRange?: 'today' | 'week' | 'month',
+    page = 1,
+    pageSize = 20
+  ): Promise<HistoryResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    });
+    if (itemType) params.append('item_type', itemType);
+    if (timeRange) params.append('time_range', timeRange);
+
+    const response = await fetch(`${API_V1}/history?${params}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<HistoryResponse>(response);
+  },
+
+  async getStats(): Promise<HistoryStats> {
+    const response = await fetch(`${API_V1}/history/stats`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<HistoryStats>(response);
+  },
+};
+
+// ============================================
 // Health Check
 // ============================================
 
@@ -678,6 +839,7 @@ const api = {
   analytics: analyticsAPI,
   translation: translationAPI,
   socialConnect: socialConnectAPI,
+  history: historyAPI,
   checkHealth: checkBackendHealth,
   setAuthToken,
   getAuthToken,

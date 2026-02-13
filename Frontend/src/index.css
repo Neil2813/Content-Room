@@ -4,112 +4,132 @@
 
 @layer base {
   :root {
-    /* Brand Colors - Monochrome warm palette */
-    --background: 45 100% 86%;
-    --foreground: 0 54% 22%;
+    /* Brand Colors - Yellow/Green Highlight Palette */
+    /* Light Mode (Interchanged from Dark: Bg=#bfc0c0, Text=#080705) */
+    --background: 180 1% 75%;
+    --foreground: 40 23% 2.5%;
 
-    --card: 45 100% 90%;
-    --card-foreground: 0 54% 22%;
+    --card: 180 1% 80%;
+    --card-foreground: 40 23% 2.5%;
 
-    --popover: 45 100% 92%;
-    --popover-foreground: 0 54% 22%;
+    --popover: 180 1% 80%;
+    --popover-foreground: 40 23% 2.5%;
 
-    --primary: 0 54% 22%;
-    --primary-foreground: 45 100% 95%;
+    --primary: 53 100% 50%;
+    --primary-foreground: 40 23% 2.5%;
 
-    --secondary: 45 60% 80%;
-    --secondary-foreground: 0 54% 22%;
+    --secondary: 180 5% 85%;
+    --secondary-foreground: 40 23% 2.5%;
 
-    --muted: 45 40% 82%;
-    --muted-foreground: 0 30% 40%;
+    --muted: 180 5% 70%;
+    --muted-foreground: 40 20% 40%;
 
-    --accent: 45 50% 78%;
-    --accent-foreground: 0 54% 22%;
+    --accent: 180 5% 85%;
+    --accent-foreground: 40 23% 2.5%;
 
-    --destructive: 0 70% 40%;
-    --destructive-foreground: 45 100% 95%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 40 23% 2.5%;
 
-    --border: 0 54% 22% / 0.15;
-    --input: 0 54% 22% / 0.15;
-    --ring: 0 54% 22%;
+    --border: 40 23% 2.5% / 0.15;
+    --input: 40 23% 2.5% / 0.15;
+    --ring: 53 100% 50%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 45 100% 88%;
-    --sidebar-foreground: 0 54% 22%;
-    --sidebar-primary: 0 54% 22%;
-    --sidebar-primary-foreground: 45 100% 95%;
-    --sidebar-accent: 45 60% 82%;
-    --sidebar-accent-foreground: 0 54% 22%;
-    --sidebar-border: 0 54% 22% / 0.1;
-    --sidebar-ring: 0 54% 22%;
+    --sidebar-background: 180 1% 80%;
+    --sidebar-foreground: 40 23% 2.5%;
+    --sidebar-primary: 53 100% 50%;
+    --sidebar-primary-foreground: 40 23% 2.5%;
+    --sidebar-accent: 180 5% 85%;
+    --sidebar-accent-foreground: 40 23% 2.5%;
+    --sidebar-border: 40 23% 2.5% / 0.1;
+    --sidebar-ring: 53 100% 50%;
 
     /* Font Families */
-    --font-english: 'Outfit', 'Urbanist', sans-serif;
-    --font-telugu: 'Anek Telugu', sans-serif;
-    --font-odia: 'Anek Odia', sans-serif;
-    --font-tamil: 'Anek Tamil', sans-serif;
-    --font-bangla: 'Anek Bangla', sans-serif;
-    --font-kannada: 'Anek Kannada', sans-serif;
-    --font-hindi: 'Anek Devanagari', sans-serif;
-    --font-malayalam: 'Anek Malayalam', sans-serif;
-    --font-gujarati: 'Anek Gujarati', sans-serif;
+    --font-english: "Outfit", "Urbanist", sans-serif;
+    --font-telugu: "Anek Telugu", sans-serif;
+    --font-odia: "Anek Odia", sans-serif;
+    --font-tamil: "Anek Tamil", sans-serif;
+    --font-bangla: "Anek Bangla", sans-serif;
+    --font-kannada: "Anek Kannada", sans-serif;
+    --font-hindi: "Anek Devanagari", sans-serif;
+    --font-malayalam: "Anek Malayalam", sans-serif;
+    --font-gujarati: "Anek Gujarati", sans-serif;
 
     /* Shadows */
-    --shadow-soft: 0 2px 8px hsl(0 54% 22% / 0.06);
-    --shadow-medium: 0 4px 16px hsl(0 54% 22% / 0.08);
-    --shadow-large: 0 8px 32px hsl(0 54% 22% / 0.1);
+    --shadow-soft: 0 2px 8px hsl(40 23% 2.5% / 0.06);
+    --shadow-medium: 0 4px 16px hsl(40 23% 2.5% / 0.08);
+    --shadow-large: 0 8px 32px hsl(40 23% 2.5% / 0.1);
   }
 
   .dark {
-    --background: 0 20% 8%;
-    --foreground: 45 100% 90%;
+    /* Dark Mode: Bg=#080705, Text=#bfc0c0, Highlight=#dfff00 */
+    --background: 40 23% 2.5%;
+    --foreground: 180 1% 75%;
 
-    --card: 0 20% 12%;
-    --card-foreground: 45 100% 90%;
+    --card: 40 23% 4%;
+    --card-foreground: 180 1% 75%;
 
-    --popover: 0 20% 10%;
-    --popover-foreground: 45 100% 90%;
+    --popover: 40 23% 4%;
+    --popover-foreground: 180 1% 75%;
 
-    --primary: 45 100% 86%;
-    --primary-foreground: 0 54% 22%;
+    --primary: 53 100% 50%;
+    --primary-foreground: 40 23% 2.5%;
 
-    --secondary: 0 20% 18%;
-    --secondary-foreground: 45 100% 90%;
+    --secondary: 40 15% 10%;
+    --secondary-foreground: 180 1% 75%;
 
-    --muted: 0 15% 20%;
-    --muted-foreground: 45 40% 70%;
+    --muted: 40 15% 10%;
+    --muted-foreground: 180 1% 50%;
 
-    --accent: 0 20% 16%;
-    --accent-foreground: 45 100% 90%;
+    --accent: 40 15% 10%;
+    --accent-foreground: 180 1% 75%;
 
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 45 100% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 180 1% 75%;
 
-    --border: 45 100% 86% / 0.15;
-    --input: 45 100% 86% / 0.15;
-    --ring: 45 100% 86%;
+    --border: 40 23% 15%;
+    --input: 40 23% 15%;
+    --ring: 53 100% 50%;
 
-    --sidebar-background: 0 20% 10%;
-    --sidebar-foreground: 45 100% 90%;
-    --sidebar-primary: 45 100% 86%;
-    --sidebar-primary-foreground: 0 54% 22%;
-    --sidebar-accent: 0 20% 16%;
-    --sidebar-accent-foreground: 45 100% 90%;
-    --sidebar-border: 45 100% 86% / 0.1;
-    --sidebar-ring: 45 100% 86%;
+    --sidebar-background: 40 23% 4%;
+    --sidebar-foreground: 180 1% 75%;
+    --sidebar-primary: 53 100% 50%;
+    --sidebar-primary-foreground: 40 23% 2.5%;
+    --sidebar-accent: 40 15% 10%;
+    --sidebar-accent-foreground: 180 1% 75%;
+    --sidebar-border: 180 1% 75% / 0.1;
+    --sidebar-ring: 53 100% 50%;
   }
 
   /* Language-based font switching */
-  .lang-en { font-family: var(--font-english); }
-  .lang-te { font-family: var(--font-telugu); }
-  .lang-or { font-family: var(--font-odia); }
-  .lang-ta { font-family: var(--font-tamil); }
-  .lang-bn { font-family: var(--font-bangla); }
-  .lang-kn { font-family: var(--font-kannada); }
-  .lang-hi { font-family: var(--font-hindi); }
-  .lang-ml { font-family: var(--font-malayalam); }
-  .lang-gu { font-family: var(--font-gujarati); }
+  .lang-en {
+    font-family: var(--font-english);
+  }
+  .lang-te {
+    font-family: var(--font-telugu);
+  }
+  .lang-or {
+    font-family: var(--font-odia);
+  }
+  .lang-ta {
+    font-family: var(--font-tamil);
+  }
+  .lang-bn {
+    font-family: var(--font-bangla);
+  }
+  .lang-kn {
+    font-family: var(--font-kannada);
+  }
+  .lang-hi {
+    font-family: var(--font-hindi);
+  }
+  .lang-ml {
+    font-family: var(--font-malayalam);
+  }
+  .lang-gu {
+    font-family: var(--font-gujarati);
+  }
 }
 
 @layer base {
@@ -122,7 +142,12 @@
     font-family: var(--font-english);
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold tracking-tight;
   }
 }
@@ -146,5 +171,42 @@
 
   .container-wide {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Database Animation */
+  /* Note: offset-anchor requires Chrome 116+ for full support.
+     Fallback: Animation will still work, just without anchor positioning. */
+  .database {
+    offset-anchor: 10px 0px;
+    animation: database-animation-path;
+    animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    animation-duration: 4s;
+    animation-delay: 1s;
+  }
+
+  .db-light-1 {
+    offset-path: path("M 31 10 v 15 q 0 5 5 5 h 59 q 5 0 5 5 v 25");
+  }
+
+  .db-light-2 {
+    offset-path: path("M 77 10 v 10 q 0 5 5 5 h 13 q 5 0 5 5 v 25");
+  }
+
+  .db-light-3 {
+    offset-path: path("M 124 10 v 10 q 0 5 -5 5 h -14 q -5 0 -5 5 v 25");
+  }
+
+  .db-light-4 {
+    offset-path: path("M 170 10 v 15 q 0 5 -5 5 h -60 q -5 0 -5 5 v 25");
+  }
+
+  @keyframes database-animation-path {
+    0% {
+      offset-distance: 0%;
+    }
+    100% {
+      offset-distance: 100%;
+    }
   }
 }
