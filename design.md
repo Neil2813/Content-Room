@@ -21,7 +21,7 @@ Content Room follows a classic **Frontend-Backend-Service** architecture with ex
 
 ### 2.2 UI Organization
 - **Public Routes**: Landing Page, Creator Studio (basic), Competitor Intel, Content Calendar.
-- **Private Routes**: Schedule Plan, Profile Settings, Saved Content, Social Connections.
+- **Private Routes**: Schedule Plan, Profile Settings, Saved Content.
 
 ## 3. Backend Design
 
@@ -33,9 +33,8 @@ Content Room follows a classic **Frontend-Backend-Service** architecture with ex
 
 ### 3.2 Database Schema (Conceptual)
 - **Users**: Local credentials, profile info.
-- **SocialAccounts**: Platform type (Twitter/LinkedIn), access tokens/cookies.
 - **ContentHistory**: Generated captions, hashtags, and moderation logs.
-- **ScheduledPosts**: Media references, platform targets, scheduled timestamps, and status.
+- **ScheduledPosts**: Media references, content drafts, scheduled timestamps, and status.
 
 ### 3.3 API Architecture
 - `/api/v1/auth`: Registration, Login, User state.

@@ -36,7 +36,7 @@ Content Room is a comprehensive web application that helps content creators stre
 
 ### ⏰ **Schedule Plan**
 - Schedule posts for future publication
-- Multi-platform support (Twitter, Instagram, LinkedIn)
+- Post preparation and preview
 - AI-powered moderation before publishing
 - Media upload and management
 
@@ -151,8 +151,7 @@ Content-Room/
 - `/api/v1/moderate/*` - Content moderation
 - `/api/v1/competitor/*` - Competitor analysis
 - `/api/v1/calendar/*` - Content calendar generation
-- `/api/v1/schedule/*` - Post scheduling
-- `/api/v1/social/*` - Social media platform connections
+- `/api/v1/schedule/*` - Post scheduling and management
 
 Full API documentation available at: http://localhost:8000/docs
 
@@ -171,11 +170,6 @@ Try these features instantly without creating an account:
 - AWS Rekognition for image moderation
 - AWS Transcribe for audio processing
 - Intelligent fallback systems
-
-### Multi-Platform 🌍
-- Twitter/X integration with cookie-based auth
-- Instagram (OAuth via Facebook)
-- LinkedIn (OAuth)
 
 ---
 
