@@ -193,16 +193,6 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ---
 
-## 📊 Recent Updates
-
-### v2.0.0 - Authentication Optional
-- ✅ Removed login barriers - all pages accessible
-- ✅ Optional authentication for enhanced features
-- ✅ Improved error handling across all endpoints
-- ✅ Streamlined navigation (removed unused History/Dashboard)
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
