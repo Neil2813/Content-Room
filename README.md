@@ -26,13 +26,13 @@ Content Room is a comprehensive web application that helps content creators stre
 - Analyze competitor social profiles and blogs
 - Identify content gaps and opportunities
 - Get strategic insights for your niche
-- **No login required** - Try it instantly!
+- Analyze competitor social profiles and blogs
 
 ### 📅 **Content Calendar**
 - Generate monthly content calendars
 - Includes Indian festivals and special dates
 - Customized for your niche and goals
-- **No login required** - Start planning immediately!
+- Customized for your niche and goals
 
 ### ⏰ **Schedule Plan**
 - Schedule posts for future publication
@@ -128,8 +128,7 @@ Content-Room/
 
 ## 🔐 Authentication
 
-**Optional Authentication Model**
-- All features are accessible without login
+**Authentication Model**
 - User accounts enable:
   - History tracking
   - Personal settings
@@ -158,12 +157,6 @@ Full API documentation available at: http://localhost:8000/docs
 ---
 
 ## 🎨 Features Highlights
-
-### No Login Required ✨
-Try these features instantly without creating an account:
-- Competitor Analysis
-- Content Calendar Generation
-- All creation tools
 
 ### AI-Powered 🤖
 - OpenAI GPT for content generation
